@@ -1,0 +1,83 @@
+{frontmatter}
+
+# Preface
+
+I am an enthusiast if there was ever such a thing. So this is an enthusiasts book, written out of joy and curiosity, and as an escapist pleasure in a time when the outside world is closing in on me, and my time for lisp is running short. Exams, graduation, the eventual job search, and employment as a Blub coder is what is in front of me for 2013. 
+
+To me Lisp is one of the most fun and easy to use languages out there, it has challenged me intellectually, and provoked my thinking in all sorts of directions, from basic software design, to how software communities work. All of these questions have led me to believe that the right course for me personally is to continue to learn Common Lisp and its history. I will not be a worse programmer if I continue to invest effort into mastering it, just the opposite. The same is true for all sorts of languages and platforms, and some of them I am also investing my self in, such as GNU Emacs, Linux, and as horribly flawed as it is, the web. Whatever my day jobs might be in the future, I will continue my hobbyist practice as a programmer, and until I find a better tool, I will continue to use and love Common Lisp. 
+
+This book is in a way an attempt at maintaining that practice and getting my skill level up. It has taken a lot of research and experimentation, and helped me improve my writing. So even if it fails to attract an audience, and even if left unfinished, it is well worth the effort.
+
+Pavel Penev, March 2013
+
+
+# Introduction
+
+## Why Lisp
+
+Today we have more programming languages than we can count. Somehow, Lisp still manages to stand out, at least for me. I've been obsessed with the lisp family of languages for four years now, and I've been especially interested in Common Lisp, which I consider to be the best general purpose dialect. It is an easy language to pick up, and a difficult language to master. So far, every day spend learning lisp has been a huge plus for me, so all those difficulties have been worth it. Lisp is fun, challenging and rewarding of such efforts. No language I've picked up since or before has felt the same way, they were all either needlessly complex(most of the complexity in lisp is there for a reason), or too simplistic and lacking in sophistication when that is needed. 
+
+As for how practical this language is for web development, It's as practical as you make it. Lisp is the perfect language for the gray areas where were we still haven't quite figured out how to do things. I believe the web is one such area, and experimentation and playful exploration of ideas is vital. This is what Lisp was designed for, not for the web specifically, but for what it is, a new playground where flexibility and creativity have room to grow. 
+
+Common Lisp has been a faithful ally in my self-education. Maybe it can be one for you too. 
+
+## Whats in the book
+
+The book is a set of tutorials and examples. It uses the Common Lisp language and some of the libraries we'll be using for the examples and tutorials include:
+
+* The Hunchentoot web server
+* The Restas web framework
+* The SEXML library for outputting XML and HTML
+* Closure-template for HTML templating
+* Parenscript for writing Javascript with Lisp syntax
+* Postmodern for PostgreSQL access, and cl-reddis as a simple datastore
+* Various utilities
+
+## Who is this for
+
+This book is for anyone interested in Lisp and web apps. I assume you have some familiarity with both subjects, but I don't assume you are a Lisp expert, you can just read a few tutorials to get the basics and get back to my book to get started with web apps. I've linked some of them in Appendix B. So you need to know what `(+ a b)` means, I won't explain html and css to you, and HTTP shouldn't be a scary mystical acronym to you. Also some knowledge of databases would be good. In other words, I assume you are a programmer, know the basics and just want to play around with Lisp.
+
+## What you need to get started
+
+A lisp implementation, preferably sbcl(recommended for Linux users) or ccl(recommended for Mac and Windows users), and Quicklisp, the Common Lisp package manager. I've written a quick "getting started" tutorial in Appendix A. And the links in Appendix B have additional information. 
+
+You will also need a text editor which supports matching parenthesis, so no notepad. Appendix A has some recommendations, but the best way to use Lisp is with Emacs and the Slime environment. A similar environment is available for Vim users with the Slimv plugin. If you don't already know Emacs or Vim, you can leave learning it for later, and just use any old code editor and the command line. If you are serious about Lisp though, consider picking up Emacs eventually. 
+
+Appendix B also has a lot of links you can go to to find more about Lisp, including tutorials, books, wikis and places you can ask your questions. 
+
+## Typographic conventions
+
+Inline code:
+
+This code is inlined: `(lambda () (format t "Hello World"))`.
+
+This is a code block in a file:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun hello-world ()
+  (format t "Hello World"))
+~~~~~~~~
+
+The following characters represent various prompts:
+
+A `*` represents a lisp REPL, `=>` marks the returned result: 
+
+{:lang="common-lisp"}
+~~~~~~~~
+ * (format nil "Hello World")
+ => "Hello World"
+~~~~~~~~
+
+`$` is a unix shell, # is a root shell, or code executed with `sudo`:
+
+~~~~~~~~
+ # apt-get install foo
+ $ foo --bar baz
+~~~~~~~~
+
+`>` is a windows `cmd.exe` prompt:
+
+~~~~~~~~
+ > dir C:\
+~~~~~~~~ 

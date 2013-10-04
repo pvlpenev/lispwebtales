@@ -1,0 +1,650 @@
+# Persistence part I: PostgreSQL
+
+## Introduction
+
+I think we've written enough horrible code for the sake of simplicity and now I want to focus on "doing it right", to the best of my abilities, meaning, I want to use a real database. The example app I'll show you in the next few chapters will be a simple reddit-like link sharing site. As an exercise, you can later go back and redo the previous blog example app to use a database.
+
+In this chapter I'll use PostgreSQL and the excellent `postmodern` library, which is specific to Postgres.  Other options exist, from the popular "NoSQL" datastores like redis and mongodb, to lisp specific object stores, like `bknr-datastore`. We'll implement a database layer in several of these stores. I'll show you how to use the Restas policy mechanism to define a singe interface to the various back-ends.
+
+## Setting up PostgreSQL
+
+### Linux
+
+Install postgresql using your distros package manager, for Debian based distros this looks like:
+
+~~~~~~~~
+ # apt-get install postgresql
+~~~~~~~~
+
+I also usually install the graphical admin tool `pgadmin3` but it is optional.
+
+Next we need to set up a database, and a user for it. Postgres administration is done with the user `postgres`. Log in from the shell, and start `psql`(the postgres shell):
+
+~~~~~~~~
+ # su - postgres
+ $ psql
+~~~~~~~~
+
+Next, we need to create a pg user and a database, I'll name the user `linkdemouser` and the database `linkdemo`, then we quit with the `\q` command:
+
+~~~~~~~~
+ postgres=# CREATE USER linkdemouser WITH PASSWORD 'mypass';
+ postgres=# CREATE DATABASE linkdemo OWNER linkdemouser;
+ postgres=# \q
+~~~~~~~~
+
+Log out as the user `postgres`, and were done:
+
+~~~~~~~~
+ $ exit
+~~~~~~~~
+
+### Windows
+
+You can download a PostgreSQL graphical installer for windows from the [PostgreSQL site](http://www.postgresql.org/download/windows/). Installation is straightforward, and you should probably follow the default installation options. 
+
+On windows 7 you will have to run the installer as an Administrator. The installer will ask you for a password for the super user `postgres`, you will use this DB account only to create a new user and a database. 
+
+At the end of the installation, deselect the check-box "Launch Stack Builder at exit?", we won't be needing that. Click finish. 
+
+After the installation completes, click the start menu, navigate to the PostgreSQL sub-menu and open "SQL Shell(psql)". It will prompt you for a servername, database, port, and user, press Enter on all four for the default values. Then it will ask for the `postgres` user password, type it in and press Enter. 
+
+Next, we need to create a pg user and a database, I'll name the user `linkdemouser` and the database `linkdemo`, then we quit with the `\q` command:
+
+~~~~~~~~
+ postgres=# CREATE USER linkdemouser WITH PASSWORD 'mypass';
+ postgres=# CREATE DATABASE linkdemo OWNER linkdemouser;
+ postgres=# \q
+~~~~~~~~
+
+That's it.
+
+## What is a policy
+
+Although we don't need to do so, we'll use the restas policy mechanism to define an interface to our database. But first lets have a short discussion of the problem policies solve for us.
+
+In our app, if we need to access the database, we'll have a bunch of queries, usually they are encapsulated in a function. So for example we might have a set of function like `(find-user id)` and `(auth-user username password)` which both contain database queries written using postmodern for example. Lets say we want to have the option of using MySQL or some other backend and be able to switch them. Common Lisp has a powerful OO system that allows us to do this easily. In our project we can define a variable called for example `*datastore*` and depending on its value, a different implementation of our database layer gets used. Using generic functions this is easy, we simply define a class for each layer, for example:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defclass postmodern-datastore () ...)
+(defclass mysql-datastore () ...)
+~~~~~~~~
+
+And set the `*datastore*` variable to an instance of one such class:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(setf *datastore* (make-instance 'postmodern-datastore ...))
+~~~~~~~~
+
+Now, the functions `find-user` and `auth-user` can be defined in terms of generic functions:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun find-user (id)
+  (datastore-find-user *datastore* id))
+  
+(defun auth-user (username password)
+  (datastore-auth-user *datastore* username password))
+~~~~~~~~
+
+Here `datastore-find-user` and `datastore-auth-user` are both methods defined on the `postmodern-datastore` and `mysql-datastore` classes, an instance of which we pass as the first argument. This pattern is fairly common, and restas provides a mechanism, called a policy, for generating all of the boilerplate necessary for it, such as defining the generic functions, the dispatch variable, the functions that call the methods, and optionally, various packages to put all of the stuff in.  
+
+
+## Creating the project
+
+Let's create the project skeleton with `restas-project`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+ * (ql:quickload "restas-project")
+ * (restas-project:start-restas-project 
+    "linkdemo"
+    :depends-on '(:sexml 
+                  :postmodern 
+                  :ironclad 
+                  :babel))
+~~~~~~~~
+
+The `ironclad` and `babel` libraries will be used to hash the user passwords.
+
+### Defining the policy
+
+Our next order of business is to define our policy, and all of the packages well be using. `restas:define-policy` has the following syntax:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:define-policy <policy-name>
+  (:interface-package <interface-package-name>)
+  (:interface-method-template <interface-method-template>)
+  (:internal-package <internal-package-name>)
+  (:internal-function-template <internal-function-template>)
+  
+  <method-definitions>)
+~~~~~~~~
+
+In our case, this is the concrete example declaration we'll be putting in `defmodule.lisp`, also containing two method declarations for `find-user` and `auth-user`(there are more methods, but we'll add them later):
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:define-policy datastore
+  (:interface-package #:linkdemo.policy.datastore)
+  (:interface-method-template "DATASTORE-~A")
+  (:internal-package #:linkdemo.datastore)
+  
+  (define-method find-user (username)
+    "find the user by username")
+  
+  (define-method auth-user (username password)
+    "Check if a user exists and has the suplied password"))
+~~~~~~~~
+
+The policy is named datastore, which means that the dynamic variable controlling dispatch will be names `*datastore*`. This variable is defined is the internal package, in our case named `linkdemo.datastore`. This package will also include the functions we actually call in our app, such as `find-user`. The interface package is called `linkdemo.policy.datastore` and this is where the generic functions that define our interface to the database are defined. This package will be included in the packages where we implement the various backends. 
+
+Notice the declarations `:interface-method-template` and `internal-function-template`. These declarations define rules for renaming the various policy methods, so for instance the generic function for `find-user` in the intefrace package will be named `datastore-find-user`. I opted to skip defining such a rule for the functions in the internal package, but I could have done the same thing there. Both declarations use format strings to generate the new names. 
+
+Also notice that method declarations are done with `define-method`. Do not be confused, methods in CL are defined with `defmethod`, and here `define-method` is just part of the syntax of the `define-policy` macro. The argument lists of these method declarations will be the same as the functions in `linkdemo.datastore`. The argument lists of the generic methods in `linkdemo.policy.datastore` will have an extra argument called `datastore` which will be used for dispatch. 
+
+Here is the complete interface we will define today, put this at the top of `defmodule.lisp`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:define-policy datastore
+  (:interface-package #:linkdemo.policy.datastore)
+  (:interface-method-template "DATASTORE-~A")
+  (:internal-package #:linkdemo.datastore)
+
+  (define-method init ()
+    "initiate the datastore")
+  
+  (define-method find-user (username)
+    "find the user by username")
+  
+  (define-method auth-user (username password)
+    "Check if a user exists and has the suplied password")
+  
+  (define-method register-user (username password)
+    "Register a new user")
+  
+  (define-method upvoted-p (link-id username)
+    "Check if a user has upvoted a link")
+  
+  (define-method upvote (link-id user)
+    "upvote a link")
+  
+  (define-method post-link (url title user)
+    "post a new link")
+  
+  (define-method get-all-links ()
+    "Get all of the links in the datastore")
+  
+  (define-method upvote-count (link-id)
+    "get the number of upvotes for a given link"))
+~~~~~~~~
+
+### Defining the rest of the packages
+
+Next, we need to define the restas module for our application, and the package where we will implement the policy interface for PostgreSQL, put these after the policy declaration:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:define-module #:linkdemo
+  (:use #:cl #:restas #:linkdemo.datastore))
+
+(defpackage #:linkdemo.pg-datastore
+  (:use #:cl #:postmodern #:linkdemo.policy.datastore))
+
+(in-package #:linkdemo)
+
+(defparameter *template-directory*
+  (merge-pathnames #P"templates/" linkdemo-config:*base-directory*))
+
+(defparameter *static-directory*
+  (merge-pathnames #P"static/" linkdemo-config:*base-directory*))
+~~~~~~~~
+
+Notice that linkdemo "uses" the internal package `linkdemo.datastore` where all of the functions like `find-user` are defined, and `linkdemo.pg-datastore` "uses" the interface package `linkdemo.policy.datastore` where the generic functions we need to implement methods for are defined. 
+
+The PostgreSQL backend will be implemented in a new file called `pg-datastore.lisp`, lets add it to `linkdemo.asd`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(asdf:defsystem #:linkdemo
+  :serial t
+  :description "Your description here"
+  :author "Your name here"
+  :license "Your license here"
+  :depends-on (:RESTAS :SEXML :POSTMODERN :IRONCLAD :BABEL)
+  :components ((:file "defmodule")
+               (:file "pg-datastore")
+               (:file "linkdemo")))
+~~~~~~~~
+
+Next, we create the file `pg-datastore.lisp` in the project directory and add an `in-package` declaration:
+
+{:lang="common-lisp"}
+~~~~~~~~
+;;;; pg-datastore.lisp
+
+(in-package #:linkdemo.pg-datastore)
+~~~~~~~~
+ 
+## The schema
+
+The app will be very simple, it will have users, who can post links, and vote on them. That makes three tables: 
+
+* A `users` table with an id, username and password fields.
+* A `links` table with an id, url, title, and submitter fields, where the sumbitter will be a foreign key to the `users` table.
+* The third table will be called `votes` and we will store all of the upvotes, it will have two fields, both foreign keys to the link and the user who upvoted it.
+
+We could have stored the upvotes as an integer in the `links` table, but then users would be able to vote more than once per link, and we don't want that. 
+
+If you are familiar with the basics of relational databases, this would be the most straightforward way to model our data.
+
+## Connecting
+
+There are two ways to connect to a PostgreSQL database, using the macro `with-connection` whose body will be executed in the context of a connection. Or using `connect-toplevel` which will create a connection and setup the special variable `*database*` to the new connection. This variable is used to execute queries. `with-connection` automatically binds it in its body. I'll be using `with-connection` for our code, but `connect-toplevel` is useful for testing at the REPL. 
+
+In order to use the macro, we'll need to have a variable with the connection spec, which has the following form: `(database user password host)`. The connection spec will be stored in a slot of our `pg-datastore` class(the one used for dispatch).  Let's define this class in `pg-datastore.lisp`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defclass pg-datastore ()
+  ((connection-spec :initarg :connection-spec
+                    :accessor connection-spec)))
+~~~~~~~~
+
+For testing purpouses, I'll create an instance of this class and store it in a variable called `*db*`(in our real app, we'll use `*datastore*` in the internal package):
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defparameter *db*
+  (make-instance 'pg-datastore
+		 :connection-spec '("linkdemo" "linkdemouser" "mypass" "localhost")))
+~~~~~~~~
+
+We can now do this:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(with-connection (connection-spec *db*)
+  ;query goes here
+  )
+~~~~~~~~
+
+## Defining the tables. 
+
+### DAO classes
+
+Postmodern isn't an ORM, so if you're used to them from places like Django or Rails, you're in luck, because in my very humble opinion, they suck. If you're using a RDBMS, learn the relational model already. Even though it isn't an ORM, postmodern does allow us to work with objects, but they are just simple DAOs(Database Access Objects). DAO objects are defined the same way ordinary lisp objects are, using `defclass`, but they have a slightly different syntax, and we need to add the `dao-class` metaclass to the definition. Here is how the `users` table will be defined:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defclass users ()
+  ((id :col-type serial :reader user-id)
+   (name :col-type string :reader user-name :initarg :name)
+   (password :col-type string :reader user-password :initarg :password)
+   (salt :col-type string :reader user-salt :initarg :salt))
+  (:metaclass dao-class)
+  (:keys id))
+~~~~~~~~
+
+The difference between a standard class definition and a dao class is that we have a `:col-type` option to slot definitions that specify what database type we want to create. In our case, `id` will be a `serial` meaning an integer that will auto-increment every time we add a record. The other two fields will be strings. We specify `dao-class` as a metaclass for our class, and we also specify that we want `id` to be a primary key. The `password` and `hash` slots will contain the password hash and salt from encrypting the password of the user. We can see what SQL will be generated by this definition with `dao-table-definition`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+ * (dao-table-definition 'users)
+~~~~~~~~
+
+It will give us the following output as a string(formatting by me):
+
+{:lang="SQL"}
+~~~~~~~~
+CREATE TABLE users (
+  id SERIAL NOT NULL, 
+  name TEXT NOT NULL, 
+  password TEXT NOT NULL, 
+  salt TEXT NOT NULL,
+  PRIMARY KEY (id)
+)
+~~~~~~~~
+
+Lets implement the method used for initiating the datastore, creating the tables seems like a good thing to put in it. The generic function is named `datastore-init`, here it is:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defmethod datastore-init ((datastore 'pg-datastore))
+  (with-connection (connection-spec datastore)
+    (unless (table-exists-p 'users)
+      (execute (dao-table-definition 'users)))))
+~~~~~~~~
+
+First we connect to the database, then, using the `table-exists-p` predicate we check if the table is already defined, if it isn't, we use the `execute` function, which will execute an SQL expression, in our case, it will be the output of `dao-table-definition`. Later we'll augment this method with the definitions of the other tables.
+
+We can call this method like this:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(datastore-init *db*)
+~~~~~~~~
+
+After the table is defined, we can add users by instantiating objects of the `users` class, and inserting them into the db using `insert-dao`, here is an example:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(with-connection (connection-spec *db*) 
+  (insert-dao (make-instance 'users
+                             :name "user"
+                             :password "pass")))
+~~~~~~~~
+
+### Querying 
+
+Say we've added a bunch of users to the db, we can now query them in two ways, as DAOs, or as an ordinary table. The dao way is with `select-dao`, which returns a list of lisp objects:
+ 
+{:lang="common-lisp"}
+~~~~~~~
+ * (with-connection (connection-spec *db*)
+     (select-dao 'users ))
+	 
+ => (#<USERS {10089B4443}> #<USERS {10089B63F3}> #<USERS {10089B69F3}>
+ #<USERS {10089B6FF3}>)
+~~~~~~~
+
+We can also use a normal query(the password and salt values will look a lot different of course):
+
+{:lang="common-lisp"}
+~~~~~~~
+ * (with-connection (connection-spec *db*)
+     (query (:select :* :from 'users)))
+	 
+ => ((1 "user" "pass" "salt") 
+     (2 "user1" "pass1" "salt1") 
+     (3 "user2" "pass2" "salt2") 
+     (4 "user3" "pass3" "salt3"))
+~~~~~~~
+
+The `query` form takes an `s-sql` expression, which is a DSL for writing sql from lisp. s-sql operators are keywords. Our query returns a list of lists, with the values in the table. We can get slightly more useful output with the `query` `args/format` optional parameter. The most common values are `:plists` and `:alists`, returning the result in the format of a plist or alist, with the column names. Example:
+
+{:lang="common-lisp"}
+~~~~~~~
+ * (with-connection (connection-spec *db*)
+     (query (:select :* :from 'users) :plists))
+	 
+ => ((:ID 1 :NAME "user" :PASSWORD "pass" :SALT "salt") 
+     (:ID 2 :NAME "user1" :PASSWORD "pass1" :SALT "salt1")
+     (:ID 3 :NAME "user2" :PASSWORD "pass2" :SALT "salt2") 
+     (:ID 4 :NAME "user3" :PASSWORD "pass3" :SALT "salt3"))
+	 
+ * (with-connection (connection-spec *db*)
+     (query (:select :* :from 'users) :alists))
+	 
+ => (((:ID . 1) (:NAME . "user") (:PASSWORD . "pass") (:SALT . "salt"))
+     ((:ID . 2) (:NAME . "user1") (:PASSWORD . "pass1") (:SALT . "salt1"))
+     ((:ID . 3) (:NAME . "user2") (:PASSWORD . "pass2") (:SALT . "salt2"))
+     ((:ID . 4) (:NAME . "user3") (:PASSWORD . "pass3") (:SALT . "salt3")))
+~~~~~~~
+
+We'll see other format examples later on.
+
+### Links and votes
+
+Because `defclass` definitions of dao objects don't support adding foreign keys, well have to use a slightly different method of defining tables using the `deftable` macro. We start off by defining our DAO:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defclass links ()
+  ((id :col-type serial :reader link-id)
+   (url :col-type string :reader link-url :initarg :url)
+   (title :col-type string :reader link-title :initarg :title)
+   (submitter-id :col-type integer :reader link-submitter-id :initarg :submitter-id))
+  (:metaclass dao-class)
+  (:keys id))
+~~~~~~~~
+
+Next, because we need to add the foreign key constrain, we define a table, which will inherit all of the fields of the dao class:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(deftable links
+  (!dao-def)
+  (!foreign 'users 'submitter-id 'id))
+~~~~~~~~
+
+`!dao-def` tells `deftable` to inherit the field definitions from the dao class definition, and `!foreign` tells `deftable` to add a foreign key constrain to the table. `!foreign`s first parameter is the target table, the second is the field, and if the field has a different name in the definition of the target table, add it as a third parameter.
+
+Lets do the same for `votes`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defclass votes ()
+  ((link-id :col-type integer :reader vote-link-id :initarg :link-id)
+   (submitter-id :col-type integer :reader vote-submitter-id :initarg :submitter-id))
+  (:metaclass dao-class)
+  (:keys link-id submitter-id))
+
+(deftable votes
+  (!dao-def)
+  (!foreign 'links 'link-id 'id)
+  (!foreign 'users 'submitter-id 'id))
+~~~~~~~~
+
+Now, let's update the `datastore-init` method to create these tables as well. Note that unlike ordinary dao-defined tables, tables defined with `deftable` are created in the database using the function `create-table`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defmethod datastore-init ((datastore pg-datastore))
+  (with-connection (connection-spec datastore)
+    (unless (table-exists-p 'users)
+      (execute (dao-table-definition 'users)))
+    (unless (table-exists-p 'links)
+      (create-table 'links))
+    (unless (table-exists-p 'votes)
+      (create-table 'votes))))
+~~~~~~~~
+
+## Defining our interface 
+
+What will the interface consist of? We'll need a way to register a user, and authenticate one at login. We'll also need to be able to post a link and upvote a it. Also we'll need a way to get a list of all the links for the home page, and a way to get their score, since we'll want to sort by it. That's about it for a quick version 1. 
+
+### Hashing passwords
+
+The original version of this chapter stored passwords in plain text, I decided to actually try to be secure in this revision. For this purpose I'll use the ironclad cryptography library to hash passwords. We'll use the pbkdf2 algorithm to hash our passwords:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun hash-password (password)
+  (multiple-value-bind (hash salt)
+      (ironclad:pbkdf2-hash-password (babel:string-to-octets password))
+    (list :password-hash (ironclad:byte-array-to-hex-string hash)
+          :salt (ironclad:byte-array-to-hex-string salt))))
+~~~~~~~~
+
+This code is kind of dense, all you need to know about it is that it returns a plist with a password hash and a salt, ready to be stored into a database.
+
+Checking to see if a password matches involves taking said password, and the password hash and salt, hashing the password using the salt, and comparing hashes:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun check-password (password password-hash salt)
+  (let ((hash (ironclad:pbkdf2-hash-password
+               (babel:string-to-octets password)
+               :salt (ironclad:hex-string-to-byte-array salt))))
+    (string= (ironclad:byte-array-to-hex-string hash)
+             password-hash)))
+~~~~~~~~
+
+With this out of the way, we can now go on and write the user handling logic.
+
+### Handling users
+
+When we create and authenticate a user we'll need a way to find if a user already exists in the database, `datastore-find-user` does this and returns a plist with the users credentials, and `nil` if no such user exists:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defmethod datastore-find-user ((datastore pg-datastore) username)
+  (with-connection (connection-spec datastore)
+    (query (:select :* :from 'users
+                    :where (:= 'name username))
+	   :plist)))
+~~~~~~~~
+
+Next, when a user logges in, we simply find the user, and check if the password matches, if so, we return the username. If no such user exists or the passwords don't match, we return nil:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defmethod datastore-auth-user ((datastore pg-datastore) username password)
+  (let ((user (datastore-find-user datastore username)))
+    (when (and user
+               (check-password password (getf user :password) 
+                                        (getf user :salt)))
+      username)))
+~~~~~~~~
+
+And finally registering the user. We check if the user is registered, and if not, we create a record in the db:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defmethod datastore-register-user ((datastore pg-datastore) username password)
+  (with-connection (connection-spec datastore)
+    (unless (datastore-find-user datastore username)
+      (let ((password-salt (hash-password password)))
+        (when
+            (save-dao 
+             (make-instance 'users
+                            :name username
+                            :password (getf password-salt :password-hash)
+                            :salt (getf password-salt :salt)))
+          username)))))
+~~~~~~~~
+
+We check to see if the user isn't registered if he isn't, we hash the password, make a DAO object with the username the hash and salt, and save it. The reason `save-dao` is wrapped in a 'when` is to make sure the operation was successful, if so, we return the username. 
+
+### Handling links
+
+In order to handle links properly, let's write a `upvoted-p` predicate method:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defmethod upvoted-p ((datastore pg-datastore) link-id user)
+  (with-connection (connection-spec datastore)
+    (query (:select :link-id :users.name :from 'votes 'users
+                    :where (:and (:= 'users.id 'submitter-id)
+                                 (:= 'users.name user)
+                                 (:= 'link-id link-id)))
+           :plist)))
+~~~~~~~~
+
+This is a slightly more complicated query, it even has an implicit join. Essentially, we query the `votes` table for any rows with the link-id and submitter-id matching that of the username of the user, and we return the link-id and the username.
+
+Upvoting a link involves finding the id of the user, checking if the user hasn't already upvoted that link,  and then simply doing an insert:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defmethod datastore-upvote ((datastore pg-datastore) link-id user)
+  (with-connection (connection-spec datastore)
+    (let ((submitter-id (getf (datastore-find-user datastore user) :id)))
+      (when (and submitter-id
+                 (not (datastore-upvoted-p datastore link-id user)))
+        (when (save-dao (make-instance 'votes
+                                       :link-id link-id
+                                       :submitter-id submitter-id))
+          link-id)))))
+~~~~~~~~
+
+For posting a link, we want the user submitting it to also automatically upvote it. In order to do that though, we have to use a DAO, since `query` will not return us the inserted value, and we need the links id in order to upvote it. After we `save-dao` the DAO though, its `link-id` accessor function will return it for us, and we can upvote it, this is how it looks like:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defmethod datastore-post-link ((datastore pg-datastore) url title user)
+  (with-connection (connection-spec datastore)
+    (let* ((submitter-id (getf (datastore-find-user datastore user) :id))
+           (link (make-instance 'links
+                                :url url
+                                :title title
+                                :submitter-id submitter-id)))
+      (save-dao link)
+      (datastore-upvote datastore (link-id link) user))))
+~~~~~~~~
+
+Getting all the links involved 3 steps, selecting them, checking their upvote count, and then sorting them. We'll need to write a bunch of functions to do so. First let's write a function that selects them all:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun get-all-links/internal ()
+  (query (:select :* :from 'links) :plists))
+~~~~~~~~
+
+This function doesn't have a `with-connection` in its body because it is internal and will only be used in a context that has a connection.
+
+Now, given a `link-id`, getting the upvote count is as easy as using the sql `COUNT` function. We tell `query` to format the result with the `:single` keyword, which returns a single result, in our case an integer:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun upvote-count (link-id)
+  (query (:select (:count link-id) :from 'votes 
+                  :where (:= link-id 'link-id))
+         :single))
+~~~~~~~~
+
+We'll augment the link plist with two keys: `:votes` is the number of votes the link has, and `voted-p` is a boolean specifying whether or not the currently logged in user has upvoted it, we do this for every link returned by `get-all-links/internal`. We have to pass `datastore` too, because `add-vote-count` calls `datastore-upvoted-p`: 
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun add-vote-count (datastore links username)
+  (loop
+     for link in links
+     for id = (getf link :id)
+     collect (list* :votes (upvote-count id)
+                    :voted-p (datastore-upvoted-p datastore id username)
+                    link)))
+~~~~~~~~
+
+
+
+The simplest way I found to get them sorted is using common lisps `sort` function:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun sort-links (links)
+  (sort links #'>
+        :key #'(lambda (link) (getf link :votes))))
+~~~~~~~~
+
+And finally:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defmethod datastore-get-all-links ((datastore pg-datastore) 
+                                    &optional username)
+  (with-connection (connection-spec datastore)
+    (sort-links
+     (add-vote-count datastore
+                     (get-all-links/internal)
+                     (or username "")))))
+~~~~~~~~
+
+Note that we use `or` to pass the optional value `username`, in case it is nil, we want to pass an empty string, since there might be a case where no user is logged in, and `upvoted-p` expects a string, and will choke on `nil`.
+
+## Exporting the interface
+
+The only thing we'll need to export from this package is the `pg-datastore` classname. Lets do that in `defmodule.lisp`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defpackage #:linkdemo.pg-datastore
+  (:use #:cl #:postmodern #:linkdemo.policy.datastore)
+  (:export #:pg-datastore))
+~~~~~~~~
+
+## Conclusion
+
+That's it for the DB layer for now, In the next chapter we'll start using it to finish our app, and then we'll augment it to use a different backend datastore.
+
+Here are some links for the curious:
+
+ * [PostgreSQL web site](http://www.postgresql.org/)
+ * [Postmodern](http://marijnhaverbeke.nl/postmodern/)
+ * [Postmodern examples](https://sites.google.com/site/sabraonthehill/postmodern-examples)
+ * [Using policy based design in RESTAS(in Russian)](http://archimag.lisper.ru/2012/12/21/%D0%98%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5_policy-based_design_%D0%B2_RESTAS)

@@ -1,0 +1,15 @@
+# Modules as reusable components part II: Implementing a reusable module
+
+## Introduction 
+
+In this chapter we'll refactor the user handling code from `linkdemo` out into it's own project, which we can then reuse in other apps as well. 
+
+First, let's create the project:
+
+{:lang="common-lisp"}
+~~~~~~~~
+ * (ql:quickload "restas-project")
+ * (restas-project:START-RESTAS-PROJECT "authdemo" :depends-on '(:sexml :cl-redis :ironclad :babel))
+~~~~~~~~
+
+For simplicity, I'll only implement a redis policy backend, you can add the PostgreSQL backend if you wish.  

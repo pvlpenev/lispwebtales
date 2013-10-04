@@ -1,0 +1,171 @@
+# Setting up a project
+
+Single file apps are fine and dandy, but things will start getting ugly as we increase the complexity of our applications. In this chapter we'll learn about ASDF systems and how to structure our projects. I'll also introduce a small utility for generating a restas project skeleton. 
+
+## Systems
+
+ASDF is a build system for Common Lisp. An ASDF system contains information on the files that are part of your app, and in what order are they to be compiled and loaded into the system. It also knows about the dependencies of your application. Lisp systems come with ASDF, and if you installed Quicklisp, you also have an easy way to download and load existing ASDF systems. 
+
+Defining an ASDF system is easy, the definition is contained in a small file in your project directory with an `.asd` extension. We'll see in a moment what such a file looks like. Code in the ASD file is lisp, so you shouldn't have problems reading and understanding it.
+
+## Quicklisp and manual installation
+
+We already saw how libraries can be downloaded, installed and loaded with Quicklisp, but what if a library isn't in Quicklisps repository? When you installed QL, it created a directory called `quicklisp` in your home directory. This is where Quicklisp installs all of the libraries it downloads. Inside it is another directory called `local-projects`. This directory contains locally installed libraries, that weren't downloaded with Quicklisp. Every ASDF system in `local-projects` is instantly visible to quicklisp, and it can compile and load that system. That is mighty convenient. That is where we'll be putting all of our projects so that we can load the source.
+
+## restas-project
+
+I have written a small utility called `restas-project` for generating a project skeleton for Restas applications. It is modeled after another utility called `quickproject` which is more general purpose and simply generates a Common Lisp application skeleton. We could use that, but `restas-project` is more convenient for our needs, since we'll only be making Restas apps.
+
+Since it is not yet in Quicklisp, we have to install it manually. You can get it at [Github](https://github.com/pvlpenev/restas-project). You can either download an archive and uncompress it in `local-projects`, or if you know how to use git, simply clone the repository into `quicklisp/local-projects/` to make it available:
+
+~~~~~~~~
+$ cd ~/quicklisp/local-projects
+$ git clone git@github.com:pvlpenev/restas-project.git 
+~~~~~~~~
+
+## Setting up a hello-world project
+
+First start lisp:
+
+~~~~~~~~
+$ sbcl
+~~~~~~~~
+
+Then load restas-project:
+
+{:lang="common-lisp"}
+~~~~~~~~
+ * (ql:quickload "restas-project")
+~~~~~~~~
+
+After it finishes loading lets create our `hello-world` project:
+
+{:lang="common-lisp"}
+~~~~~~~~
+ * (restas-project:start-restas-project "hello-world")
+~~~~~~~~
+
+This will create a new directory called `hello-world` in `local-projects`. Lets see what we have in there:
+
+~~~~~~~~
+.
+├── defmodule.lisp
+├── hello-world.asd
+├── hello-world.lisp
+├── static/
+│   ├── css/
+│   ├── images/
+│   └── js/
+├── templates/
+└── tests/
+~~~~~~~~
+
+`hello-world` contains 3 files and 3 directories. `static` is for  any static content we might have, it's 3 sub-directories `css`, `images` and `js` are for css, image files and JavaScript source files respectively. The `templates` directory is for template files we'll write later on. And the `tests` directory is for putting unit tests, since we didn't tell `restas-project` to generate a test ASDF system, this directory will be unused for now. 
+
+### hello-world.asd
+
+Let's look at the files. First we have the system definition file `hello-world.asd`. Let's have a peak inside:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defpackage #:hello-world-config (:export #:*base-directory*))
+(defparameter hello-world-config:*base-directory* 
+  (make-pathname :name nil :type nil :defaults *load-truename*))
+
+(asdf:defsystem #:hello-world
+  :serial t
+  :description "Your description here"
+  :author "Your name here"
+  :license "Your license here"
+  :depends-on (:RESTAS)
+  :components ((:file "defmodule")
+               (:file "hello-world")))
+~~~~~~~~
+
+The first 3 lines define a config package, we use it simply to have a reference in our running application to the directory the source is located, since we'll need access to static resources that aren't lisp source files, like css files and template files. These lines are not important, the important part is the `defsystem` definition, let's look it line by line.
+
+First we give our system a name, in this case `#:hello-world`. The next line `:serial t` tells asdf that we want our files to be loaded in the order we specify them, since code in latter files might depend on previous files. 
+
+Following are 3 description lines, the keys `:description`, `:author` and `:license` specify additional info about our system, the system will still run fine without them, but it is a good idea to include that information here. For now, we won't bother with editing it.
+
+Next, with the key `:depends-on` we list our library dependencies, in this case it contains only Restas, but can have any number of names of asdf systems. 
+
+The `:components` key tells ASDF what files are in our system. In this case only `defmodule.lisp` and `hello-world.lisp`. Note the syntax, components are specified as a list of lists, starting with the keyword `:file` followed by the name of the file, without the extension. So `defmodule.lisp` is specified as `(:file "defmodule")`. 
+
+### defmodule.lisp
+
+In the file `defmodule.lisp` we define our packages and modules included in our application. Normal Lisp projects call this file `packages.lisp` by convention, but we use the Restas convention of naming it `defmodule.lisp`. Lets look inside:
+
+{:lang="common-lisp"}
+~~~~~~~~
+;;;; defmodule.lisp
+
+(restas:define-module #:hello-world
+  (:use #:cl))
+
+(in-package #:hello-world)
+
+(defparameter *template-directory*
+  (merge-pathnames #P"templates/" hello-world-config:*base-directory*))
+
+(defparameter *static-directory*
+  (merge-pathnames #P"static/" hello-world-config:*base-directory*))
+~~~~~~~~
+
+This should seem mostly familiar, it simply defines a module named `#:hello-world` like we did in the previous chapter. Note however that the script did not add `#:restas` as a package to be imported into the `hello-world` package. This is because I personally prefer to qualify symbol names with their package name, so I would write `restas:define-route` instead of `define-route`. If you prefer otherwise, change that form to `(:use #:cl #:restas)`.
+
+Next we define two variables, called `*template-directory*` and `*static-directory*`, if we happen to need to find the files that might be present there. 
+
+This is it for `defmodule.lisp`. 
+
+### hello-world.lisp
+
+This is the main file of our application. This is where all of our routes will be defined. Here is how this file should look like:
+
+{:lang="common-lisp"}
+~~~~~~~~
+;;;; hello-world.lisp
+
+(in-package #:hello-world)
+
+;;; "hello-world" goes here. Hacks and glory await!
+~~~~~~~~
+
+Nothing but an 'in-package` clause. Let's not keep it empty, let's define a route:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:define-route main ("")
+  "Hello World")
+~~~~~~~~
+
+## Running the project
+
+Now let's start our project. First open up lisp
+
+~~~~~~~~
+$ sbcl
+~~~~~~~~
+
+Then load `hello-world` with Quicklisp:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(ql:quickload "hello-world")
+~~~~~~~~
+
+Then start up the server:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:start '#:hello-world :port 8080)
+~~~~~~~~
+
+Now if you navigate to [http://localhost:8080](http://localhost:8080) you'll see the message `Hello World`
+
+You can stop the server either by exiting lisp, or by typing the following:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:stop-all)
+~~~~~~~~ 

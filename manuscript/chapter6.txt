@@ -1,0 +1,288 @@
+# Persistence part II: The UI
+
+## Introduction
+
+In the last chapter we developed a simple database schema using PostgreSQL and wrote a layer to access it using postmodern and used restas policies to make it reusable with other datastores. In this chapter we'll develop a very simple UI just to show how to actually use this API we wrote so that in the next one we can write an implementation using other datastores and show how it all "just works". You won't see much new stuff here, We've done most of this already.
+
+## Set up
+
+Lets set up sexml, like we did in the previous project. In the `defmodule.lisp` file, add the sexml initialization code:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(sexml:with-compiletime-active-layers
+    (sexml:standard-sexml sexml:xml-doctype)
+  (sexml:support-dtd
+   (merge-pathnames "html5.dtd" (asdf:system-source-directory "sexml"))
+   :<))
+~~~~~~~~
+
+Next, we'll need to add two new files to our project, `util.lisp` will contain some useful functions used in the rest of the project, and `template.lisp` where we keep our sexml templates:
+
+{:lang="common-lisp"}
+~~~~~~~
+(asdf:defsystem #:linkdemo
+  :serial t
+  :description "Your description here"
+  :author "Your name here"
+  :license "Your license here"
+  :depends-on (:RESTAS :SEXML :POSTMODERN :IRONCLAD :BABEL)
+  :components ((:file "defmodule")
+	       (:file "pg-datastore")
+	       (:file "util")
+	       (:file "template")
+               (:file "linkdemo")))
+~~~~~~~
+
+Create both of these files and put `(in-package #:linkdemo)` at their tops.
+
+## The templates
+
+Of course the first thing to do in the `template.lisp` file is to add:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(<:augment-with-doctype "html" "" :auto-emit-p t)
+~~~~~~~~
+
+In order to get a doctype declaration in our output. 
+
+The first template is `html-frame`. The function takes a plist called `context` which will contain the data to be displayed, and creates an html page with a title and a menu with links:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun html-frame (context)
+  (<:html
+   (<:head (<:title (getf context :title)))
+   (<:body
+    (<:div
+     (<:h1 (getf context :title))
+     (<:a :href (genurl 'home) "Home") " | "
+     (if (logged-on-p)
+         (list (<:a :href (genurl 'submit) "Submit a link")
+               " | "
+               (<:a :href (genurl 'logout)
+                    (format nil "Logout ~A"
+                            (logged-on-p))))
+         (list (<:a :href (genurl 'login) "Log in")
+               " or "
+               (<:a :href (genurl 'register) "Register")))
+     (<:hr))
+    (getf context :body))))
+~~~~~~~~
+
+After the `h1` title we have a menu, composed of links, the first is a link to the home page, followed by a separator: `" | "`. Next, we check if the user is logged in, using the function `logged-on-p` which we will define in `util.lisp` in a minute. We display the rest of the menu depending on this predicate. If the user is logged in, we display a link to a submit page and a link to log out. If the user isn't logged in, we prompt to either log in, or register. Simple enough I hope.
+
+The `logged-on-p` function is defined in `util.lisp`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun logged-on-p ()
+  (hunchentoot:session-value :username))
+~~~~~~~~
+
+Notice that it always returns the name of the user, if one is logged in, so we can use it in displaying the username in `html-frame` in the snippet: `(format nil "Logout ~A" (logged-on-p))`.
+
+The next template is the actual home page, it takes a list of links, which are plists. It then displays all the links on separate lines. On each line, is either an upvote link, or a `*` if the user isn't logged in, followed by a vote count, and the actual link. If the user has already upvoted a link, instead of an upvote link, a `*` is displayed:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun home-page (links)
+  (loop
+     for link in links
+     collect
+       (<:div (if (logged-on-p)
+                  (if (getf link :voted-p)
+                      "*"
+                      (<:a :href (genurl 'upvote-link :id (getf link :id)) 
+                           "upvote"))
+                  "*")
+              " "
+              (getf link :votes)
+              " "
+              (<:a :href (getf link :url) (getf link :title)))))
+~~~~~~~~
+
+The last three templates are just the login and registration forms, and the form to submit a link:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun login-form ()
+  (<:form :action (genurl 'login/post) :method "post"
+          "User name:" (<:br)
+          (<:input :type "text" :name "username")(<:br)
+          "Password:" (<:br)
+          (<:input :type "password" :name "password") (<:br)
+          (<:input :type "submit" :value "Log in")))
+
+(defun register-form ()
+  (<:form :action (genurl 'register/post) :method "post"
+          "User name:" (<:br)
+          (<:input :type "text" :name "username")(<:br)
+          "Password:" (<:br)
+          (<:input :type "password" :name "password") (<:br)
+          (<:input :type "submit" :value "Register")))
+	  
+(defun submit-form ()
+  (<:form :action (genurl 'submit/post) :method "post"
+          "Title:" (<:br)
+          (<:input :type "text" :name "title") (<:br)
+          "URL:" (<:br)
+          (<:input :type "text" :name "url") (<:br)
+          (<:input :type "submit" :value "Submit")))
+~~~~~~~~
+
+I hope there isn't anything I need to explain here anymore. 
+
+## The routes
+
+Lets start with the home page:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route home ("")
+  (list :title "Linkdemo"
+	:body (home-page (get-all-links (logged-on-p)))))
+~~~~~~~~
+
+This is the first time we actually used the front part of our database layer. Restas has generated a convenient function called `get-all-links` that might look something like:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun get-all-links (&optional username)
+  (datastore-get-all-links *datastore* username))
+~~~~~~~~
+
+Remember that this method returned all the links, in a form specific to the logged in user, so that is why we pass in the username too. If there is no user, `datastore-get-all-links` handles that for us nicely. This all makes the code of the route very pretty. 
+
+### Handling users 
+
+The next five routes handle user registration, logging in, and logging out. First, logging in:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route login ("login")
+  (list :title "Log in"
+        :body (login-form)))
+~~~~~~~~
+
+Now, lets handle this form:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route login/post ("login" :method :post)
+  (let ((user (auth-user (hunchentoot:post-parameter "username")
+                         (hunchentoot:post-parameter "password"))))
+    (if user
+        (log-in user)
+        (redirect 'login))))
+~~~~~~~~
+
+This route is fairly simple, we pass the post data to `auth-user`, which as we already said, will call the method `datastore-auth-user` and return a username if it is successful. We check if it is, and if so, we log the user in using the function `log-in`, otherwise we redirect the user to try again. Here is `log-in`s definition is util.lisp:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun log-in (username &optional (redirect-route 'home))
+  (hunchentoot:start-session)
+  (setf (hunchentoot:session-value :username) username)
+  (redirect redirect-route))
+~~~~~~~~
+
+It will start a session, set it to the username and redirect the user to a supplied route, `home` by default.
+
+The code to register a user is almost exactly the same:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route register ("register")
+  (list :title "register"
+        :body (register-form)))
+
+(define-route register/post ("register" :method :post)
+  (let ((user (register-user (hunchentoot:post-parameter "username")
+                             (hunchentoot:post-parameter "password"))))
+    (if user
+        (log-in user)
+        (redirect 'register))))
+~~~~~~~~
+
+Finally, we have a route to log out the user:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route logout ("logout")
+  (log-out))
+~~~~~~~~
+
+it just calls the `log-out` function, again, defined in `util.lisp`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun log-out (&optional (redirect-route 'home))
+  (setf (hunchentoot:session-value :username) nil)
+  (redirect redirect-route))
+~~~~~~~~
+
+### Handling links
+
+Submiting a link is just as easy as logging in, or registering:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route submit ("submit")
+  (list :title "Submit a link"
+	:body (submit-form)))
+
+(define-route submit/post ("submit" :method :post)
+  (let ((link (post-link (hunchentoot:post-parameter "url")
+                         (hunchentoot:post-parameter "title")
+                         (logged-on-p))))
+    (if link
+        (redirect 'home)
+        (redirect 'submit))))
+~~~~~~~~
+
+A bit more interesting is the `upvote-link` route:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route upvote-link ("upvote/:id")
+  (:sift-variables (id #'parse-integer))
+  (when (logged-on-p)
+    (upvote id (logged-on-p)))
+  (redirect 'home))
+~~~~~~~~
+
+## Getting it to run
+
+In `util.lisp`, lets define a `start-linkdemo` function that will set up our application:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun start-linkdemo (&key
+                        (port 8080)
+                        (datastore 'linkdemo.pg-datastore:pg-datastore)
+                        (datastore-init nil))
+  (setf *datastore* (apply #'make-instance datastore datastore-init))
+  (init)
+  (start '#:linkdemo :port port :render-method 'html-frame))
+~~~~~~~~
+
+Essentially we have 3 keyword parameters, a port, a datastore, by default it will be our PostgreSQL class, and `:datastore-init` which is the arguments to supply to `make-instance` when we instantiate the datastore class. In our case, that will be the connection spec. Let's export it in `defmodule.lisp`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:define-module #:linkdemo
+  (:use #:cl #:restas #:linkdemo.datastore)
+  (:export #:start-linkdemo))
+~~~~~~~~
+
+Now our app is complete. Load it, and try it out at the repl:
+
+{:lang="common-lisp"}
+~~~~~~~~
+ * (linkdemo:start-linkdemo
+     :datastore-init '(:connection-spec ("linkdemo" "linkdemouser" "mypass" "localhost")))
+~~~~~~~~
+
+Try it out, play with it. We'll continue in the next chapter.  

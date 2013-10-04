@@ -1,0 +1,399 @@
+# Putting it together: Updated blog example
+
+Let's update our blog example, we'll turn it into an ASDF system, and update the templates slightly. Also, we'll add a session based authentication, with a login form to replace the crude http based authorization. 
+
+W>## Note on RESTAS version
+W>
+W> If you are reading this in March or early April 2013, you might need to use a restas version from github, since the code depends on a bugfix that happened just after a quicklisp update, so we have to wait for the next one, probably in a month or so. Until then, you can get the new restas from github at [the restas github repo](https://github.com/archimag/restas/), clone or download the source into your `~/quicklisp/local-projects/` directory.
+
+## Creating the project
+
+First, let's create the project:
+
+{:lang="common-lisp"}
+~~~~~~~~
+ * (ql:quickload :restas-project)
+ * (restas-project:start-restas-project "blogdemo" :depends-on '(:sexml))
+~~~~~~~~
+
+Let's edit the `blogdemo.asd` to add a template.lisp file:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(asdf:defsystem #:blogdemo
+  :serial t
+  :description "Your description here"
+  :author "Your name here"
+  :license "Your license here"
+  :depends-on (:RESTAS :SEXML)
+  :components ((:file "defmodule")
+               (:file "template")
+               (:file "blogdemo")))
+~~~~~~~~
+
+## Setting up defmodule.lisp
+
+We'll need to edit `defmodule.lisp` to add `restas` in the `:use` list of `define-module`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:define-module #:blogdemo
+  (:use #:cl #:restas))
+~~~~~~~~
+
+Following is the auto-generated code from `restas-project`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(in-package #:blogdemo)
+
+(defparameter *template-directory*
+  (merge-pathnames #P"templates/" blogdemo-config:*base-directory*))
+
+(defparameter *static-directory*
+  (merge-pathnames #P"static/" blogdemo-config:*base-directory*))
+~~~~~~~~
+
+Next we define the `*posts*` variable:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defparameter *posts* nil)
+~~~~~~~~
+
+and finally we paste the `sexml` initialization code:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(sexml:with-compiletime-active-layers
+    (sexml:standard-sexml sexml:xml-doctype)
+  (sexml:support-dtd
+   (merge-pathnames "html5.dtd" (asdf:system-source-directory "sexml"))
+   :<))
+~~~~~~~~
+
+## Updating the templates
+
+First, Let's create a template.lisp file, like we specified in the `asd` file. We set it's package to be `blogdemo` and specify that sexml should augment it's output with a doctype:
+
+{:lang="common-lisp"}
+~~~~~~~~
+;;;; template.lisp
+
+(in-package #:blogdemo)
+
+(<:augment-with-doctype "html" "" :auto-emit-p t)
+~~~~~~~~
+
+I've gone a bit crazy with redefining `html-frame`. When we start our app with `restas:start` we'll specify `html-frame` as the default render method for the module. Since by convention render methods take a plist of data to be displayed, that's what the new version will take, the parameter is called `context`. I've also defined a menu with a link to the home page, and conditionally displaying either a link to add a post or log out, or a link to log in.
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun html-frame (context)
+  (<:html
+   (<:head (<:title (getf context :title)))
+   (<:body
+    (<:div
+     (<:h1 (getf context :title))
+     (<:a :href (genurl 'home) "Home") " | "
+     (if (hunchentoot:session-value :username)
+         (list 
+           (<:a :href (genurl 'add) "Add a blog post") " | "
+           (<:a :href (genurl 'logout)
+                (format nil "Logout ~A"
+                        (hunchentoot:session-value :username))))
+         (<:a :href (genurl 'login) "Log in"))
+     (<:hr))
+    (getf context :body))))
+~~~~~~~~
+
+Since We'll be using the hunchentoot session to store information about the logged in user, we check if the session value `:username` has a value. If it is nil, there is no logged in user, and we display a link to the `login` route we'll define later. If the value is non-nil though, the user can add a post and can also log out, so we display the appropriate links, and display the username of the logged in user.
+
+The `render-post` function remains the same:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun render-post (post)
+  (list
+   (<:div
+    (<:h2 (<:a :href 
+               (genurl 'post :id (position post *posts* :test #'equal))
+               (getf post :title)))
+    (<:h3 (<:a :href 
+               (genurl 'author :id (getf post :author-id))
+               "By " (getf post :author)))
+    (<:p (getf post :content)))
+   (<:hr)))
+~~~~~~~~
+
+The other old template we need will be `add-post-form`, it is almost the same, except we don't wrap the code in `html-frame` here:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun add-post-form ()
+  (<:form :action (genurl 'add/post) :method "post"
+      "Author name:" (<:br)
+      (<:input :type "text" :name "author")(<:br)
+      "Title:" (<:br)
+      (<:input :type "text" :name "title") (<:br)
+      "Content:" (<:br)
+      (<:textarea :name "content" :rows 15 :cols 80) (<:br)
+      (<:input :type "submit" :value "Submit")))
+~~~~~~~~ 
+
+And now for the login form:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun login-form ()
+  (<:form :action (genurl 'login/post) :method "post"
+      "User name:" (<:br)
+      (<:input :type "text" :name "username")(<:br)
+      "Password:" (<:br)
+      (<:input :type "password" :name "password") (<:br)
+      (<:input :type "submit" :value "Log in")))
+~~~~~~~~
+
+These are all the template functions we need. 
+
+## Rewriting the routes
+
+The `home` route is slightly more complicated than before:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route home ("")
+  (list :title "Blogdemo"
+        :body (mapcar #'render-post *posts*)))
+~~~~~~~~
+
+The old `post` route looked like this:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route post ("post/:id")
+  (let* ((id (parse-integer id :junk-allowed t))
+         (post (elt *posts* id)))
+    (blogpage (list post))))
+~~~~~~~~
+
+Updateing it wouldn't be too difficult:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route post ("post/:id")
+  (let* ((id (parse-integer id :junk-allowed t))
+         (post (elt *posts* id)))
+    (list :title (getf post :title)
+          :body (render-post post))))
+~~~~~~~~
+
+But what if we call the URL `/post/blah`, that would break our program. We need to make sure that `id` is an integer, and signal a `404 not found` to the user otherwise. We already saw that we can add a declaration to a route to specify a render method, but we can also specify other things in declarations. One such thing is the `:sift-variables` declaration, which is used to validate and transform route variables. Lets use it here with `#'parse-integer`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route post ("post/:id")
+  (:sift-variables (id #'parse-integer))
+  (let ((post (elt *posts* id)))
+    (list :title (getf post :title)
+          :body (render-post post))))
+~~~~~~~~
+
+This works, but we now have another problem to solve, what if the user enters a link to a post that doesn't exist yet, if we have only 3 posts, and the user enters `/post/33` the program will break again. Lets define a custom validation function to use with `:sift-variables`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun validate-post-id (id)
+  (let ((id (parse-integer id :junk-allowed t)))
+    (if (< id (length *posts*))
+        id
+        nil)))
+~~~~~~~~
+
+And now for the final version of the route:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route post ("post/:id")
+  (:sift-variables (id #'validate-post-id))
+  (let ((post (elt *posts* id)))
+    (list :title (getf post :title)
+          :body (render-post post))))
+~~~~~~~~
+
+For the `author` route we'll also want to add such validation. First we'll need to generate a list of all authors in the database, the following function collects all the `author-id`s in the database:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun get-authors ()
+  (loop for post in *posts*
+       collect (getf post :author-id)))
+~~~~~~~~
+
+Now the validation function its self:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun validate-author-id (author-id)
+  (find author-id (get-authors) :test #'string=))
+~~~~~~~~
+
+And the route:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route author ("author/:id")
+  (:sift-variables (id #'validate-author-id))
+  (let ((posts (loop for post in *posts*
+                 if (string= id (getf post :author-id))
+                 collect post)))
+    (list :title (format nil "Posts by ~a" (getf (first posts) :author))
+          :body  (mapcar #'render-post posts))))
+~~~~~~~~
+
+Next, let's handle logging in and out. The `login` route is pretty simple:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route login ("login")
+  (list :title "Log in"
+        :body (login-form)))
+~~~~~~~~
+
+We'll handle the form in the `login/post` route. Again, We'll just check for the username and password being "user" and "pass" respectively. If they match, we start a hunchentoot session, set the session value of `:username` to "user" and redirect back to the home page. If the login wasn't successful, we redirect back to the login page:
+
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route login/post ("login" :method :post)
+  (if (and (string= "user" (hunchentoot:post-parameter "username"))
+           (string= "pass" (hunchentoot:post-parameter "password")))
+      (progn
+        (hunchentoot:start-session)
+        (setf (hunchentoot:session-value :username) "user")
+        (redirect 'home))
+      (redirect 'login)))
+~~~~~~~~
+
+Logging out is simply setting the session value to nil, and redirecting to the home page:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route logout ("logout")
+  (setf (hunchentoot:session-value :username) nil)
+  (redirect 'home))
+~~~~~~~~
+
+Now lets handle adding blog posts. Another declaration we can use in routes is `:requirements`. You supply it a predicate, and if it returns nil, restas returns a NOT FOUND page. We'll define such a predicate, since we only want our route to be accessible to logged in users:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun logged-on-p ()
+  (hunchentoot:session-value :username))
+~~~~~~~~
+
+And the route its self looks like this:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route add ("add")
+  (:requirement #'logged-on-p)
+  (list :title "Add a blog post"
+        :body (add-post-form)))
+~~~~~~~~
+
+The `add/post` route that handles the `add` form is unchanged, and so is the slug function:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun slug (string)
+  (substitute #\- #\Space
+    (string-downcase
+      (string-trim '(#\Space #\Tab #\Newline)
+                   string))))
+
+(define-route add/post ("add" :method :post)
+  (let ((author (hunchentoot:post-parameter "author"))
+    (title (hunchentoot:post-parameter "title"))
+    (content (hunchentoot:post-parameter "content")))
+    (push (list :author author
+                :author-id (slug author)
+                :title title
+                :content content) 
+          *posts*)
+    (redirect 'home)))
+~~~~~~~~
+
+## Post chapter refactoring
+
+The app is still not pretty enough. Let's reorganize it a bit. The functions `slug`, `validate-post-id`, `get-authors`, `validate-author-id`, and `logged-on-p` are utility functions, let's move them to a file called util.lisp. First, let's add the file to `blogdemo.asd`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(asdf:defsystem #:blogdemo
+  :serial t
+  :description "Your description here"
+  :author "Your name here"
+  :license "Your license here"
+  :depends-on (:RESTAS :SEXML)
+  :components ((:file "defmodule")
+               (:file "util")
+               (:file "template")
+               (:file "blogdemo")))
+~~~~~~~~
+
+Note that `util.lisp` comes before `template.lisp` and `blogdemo.lisp`, since I'll want to use `logged-on-p` in `html-template` in a little bit. Another function I want to put in `util.lisp` is `start-blogdemo` to start our restas app:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun start-blogdemo (&optional (port 8080))
+  (start '#:blogdemo :port port :render-method 'html-frame))
+~~~~~~~~
+
+Note that it is here that we specify the render method for the module. We couldn't have done it in the `define-module` form, since the symbol `blogdemo::html-template` didn't exist before the package was created, so we would have to define a separate package for the templates, like `closure-template` does and export all of the symbols from that package so we can use them in the routes. On top of that, since we use route symbol names in the templates to generate urls, we would have to either export all of the route names from `blogdemo` or rewrite the templates not to use `genurl`. Before the fix mentioned in the beginning of the chapter, I considered doing exactly this, fortunately I didn't have to, since it would have made the code a lot more complicated. 
+
+Next, we need to export `start-blogdemo` from the `blogdemo` module, in `defmodule.lisp`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:define-module #:blogdemo
+  (:use #:cl #:restas)
+  (:export #:start-blogdemo))
+~~~~~~~~
+
+Now we can go back and "fix" `html-frame` to use `logged-on-p`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun html-frame (context)
+  (<:html
+   (<:head (<:title (getf context :title)))
+   (<:body
+    (<:div
+     (<:h1 (getf context :title))
+     (<:a :href (genurl 'home) "Home") " | "
+     (if (logged-on-p)
+         (list (<:a :href (genurl 'add) "Add a blog post")
+           " | "
+           (<:a :href (genurl 'logout)
+             (format nil "Logout ~A"
+                    (hunchentoot:session-value :username))))
+         (<:a :href (genurl 'login) "Log in"))
+     (<:hr))
+    (getf context :body))))
+~~~~~~~~
+
+## Running the app
+
+We are ready to start our app now:
+
+{:lang="common-lisp"}
+~~~~~~~~
+ * (ql:quickload "blogdemo")
+ * (blogdemo:start-blogdemo)
+~~~~~~~~
+
+And we can stop the app of course with `(restas:stop-all)`.
+
+Congratulations! We have come a long way since chapter 1, but we still have a lot of work to do!
+
