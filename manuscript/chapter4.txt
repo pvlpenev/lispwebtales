@@ -1,10 +1,6 @@
 # Putting it together: Updated blog example
 
-Let's update our blog example, we'll turn it into an ASDF system, and update the templates slightly. Also, we'll add a session based authentication, with a login form to replace the crude http based authorization. 
-
-W>## Note on RESTAS version
-W>
-W> If you are reading this in March or early April 2013, you might need to use a restas version from github, since the code depends on a bugfix that happened just after a quicklisp update, so we have to wait for the next one, probably in a month or so. Until then, you can get the new restas from github at [the restas github repo](https://github.com/archimag/restas/), clone or download the source into your `~/quicklisp/local-projects/` directory.
+Let's update our blog example, we'll turn it into an ASDF system, and update the templates slightly. Also, we'll add a session based authentication, with a login form to replace the crude http based authorization.
 
 ## Creating the project
 
@@ -97,7 +93,7 @@ I've gone a bit crazy with redefining `html-frame`. When we start our app with `
      (<:h1 (getf context :title))
      (<:a :href (genurl 'home) "Home") " | "
      (if (hunchentoot:session-value :username)
-         (list 
+         (list
            (<:a :href (genurl 'add) "Add a blog post") " | "
            (<:a :href (genurl 'logout)
                 (format nil "Logout ~A"
@@ -116,10 +112,10 @@ The `render-post` function remains the same:
 (defun render-post (post)
   (list
    (<:div
-    (<:h2 (<:a :href 
+    (<:h2 (<:a :href
                (genurl 'post :id (position post *posts* :test #'equal))
                (getf post :title)))
-    (<:h3 (<:a :href 
+    (<:h3 (<:a :href
                (genurl 'author :id (getf post :author-id))
                "By " (getf post :author)))
     (<:p (getf post :content)))
@@ -139,7 +135,7 @@ The other old template we need will be `add-post-form`, it is almost the same, e
       "Content:" (<:br)
       (<:textarea :name "content" :rows 15 :cols 80) (<:br)
       (<:input :type "submit" :value "Submit")))
-~~~~~~~~ 
+~~~~~~~~
 
 And now for the login form:
 
@@ -154,7 +150,7 @@ And now for the login form:
       (<:input :type "submit" :value "Log in")))
 ~~~~~~~~
 
-These are all the template functions we need. 
+These are all the template functions we need.
 
 ## Rewriting the routes
 
@@ -177,7 +173,7 @@ The old `post` route looked like this:
     (blogpage (list post))))
 ~~~~~~~~
 
-Updateing it wouldn't be too difficult:
+Updating it wouldn't be too difficult:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -350,7 +346,7 @@ Note that `util.lisp` comes before `template.lisp` and `blogdemo.lisp`, since I'
   (start '#:blogdemo :port port :render-method 'html-frame))
 ~~~~~~~~
 
-Note that it is here that we specify the render method for the module. We couldn't have done it in the `define-module` form, since the symbol `blogdemo::html-template` didn't exist before the package was created, so we would have to define a separate package for the templates, like `closure-template` does and export all of the symbols from that package so we can use them in the routes. On top of that, since we use route symbol names in the templates to generate urls, we would have to either export all of the route names from `blogdemo` or rewrite the templates not to use `genurl`. Before the fix mentioned in the beginning of the chapter, I considered doing exactly this, fortunately I didn't have to, since it would have made the code a lot more complicated. 
+Note that it is here that we specify the render method for the module. We couldn't have done it in the `define-module` form, since the symbol `blogdemo::html-template` didn't exist before the package was created, so we would have to define a separate package for the templates, like `closure-template` does and export all of the symbols from that package so we can use them in the routes. On top of that, since we use route symbol names in the templates to generate urls, we would have to either export all of the route names from `blogdemo` or rewrite the templates not to use `genurl`. Before the fix mentioned in the beginning of the chapter, I considered doing exactly this, fortunately I didn't have to, since it would have made the code a lot more complicated.
 
 Next, we need to export `start-blogdemo` from the `blogdemo` module, in `defmodule.lisp`:
 
@@ -396,4 +392,3 @@ We are ready to start our app now:
 And we can stop the app of course with `(restas:stop-all)`.
 
 Congratulations! We have come a long way since chapter 1, but we still have a lot of work to do!
-
