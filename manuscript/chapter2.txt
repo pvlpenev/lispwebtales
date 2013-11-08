@@ -172,4 +172,4 @@ You can stop the server either by exiting lisp, or by typing the following:
 
 ## Conclusion
 
-That's it for project organization for now. Next up, we'll explore HTML generation and output with templates and a neat DSL for XML/HTML output.
+That's it for project organization for now. Next up, we'll explore HTML generation and output with templates.

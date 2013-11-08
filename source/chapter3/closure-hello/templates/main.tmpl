@@ -1,0 +1,28 @@
+{namespace closure-hello.view}
+
+{template main}
+  <html>
+    <head>
+      <title>{$title}</title>
+    </head>
+    <body>
+      {if $main}
+        <a href="/todos">Todos</a>
+      {elseif $todos}
+        <a href="/">Home</a>
+      {else}
+        <h1>Where am i?</h1>
+      {/if}
+      {$body | noAutoescape}
+    </body>
+  </html>
+{/template}
+
+{template todos}
+  <h1>Tasks for today:</h1>
+  <ul>
+    {foreach $task in $todos}
+      <li>{$task}</li>
+    {/foreach}
+  </ul>
+{/template}

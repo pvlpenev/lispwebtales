@@ -4,7 +4,7 @@
 
 ### HTML generators
 
-An html generator is a library to generate html from lisp code. SEXML, the library we saw earlier is an example of one such generator. There are as many such libraries as there are lisp programmers, I'll lie to you if I told you I didn't try writing one myself. [Cliki][gen] lists 12, and that is certainly not all of them. The most popular such library is `cl-who` and it is the most likely for you to come across if you read other peoples code. But I, and many others don't like `cl-who`(not that it's bad, just not my taste), so I just picked another one for the examples in this book. Namely SEXML. 
+An html generator is a library to generate html from lisp code. SEXML, the library we saw earlier is an example of one such generator. There are as many such libraries as there are lisp programmers, I'll lie to you if I told you I didn't try writing one myself. [Cliki][gen] lists 12, and that is certainly not all of them. The most popular such library is `cl-who` and it is the most likely for you to come across if you read other peoples code. But I, and many others don't like `cl-who`(not that it's bad, just not my taste), so I just picked another one for the examples in this book. Namely SEXML.
 
 A note about SEXML, when we want to use it in a project, we'll add it's initialization code to the `defmodule.lisp` file:
 
@@ -19,7 +19,7 @@ A note about SEXML, when we want to use it in a project, we'll add it's initiali
 (<:augment-with-doctype "html" "")
 ~~~~~~~~
 
-In chapter one, since you didn't yet know what asdf was, I didn't explain the line `(asdf:system-source-directory "sexml")`. ASDF here finds us the directory where Quicklisp installed SEXML. 
+In chapter one, since you didn't yet know what asdf was, I didn't explain the line `(asdf:system-source-directory "sexml")`. ASDF here finds us the directory where Quicklisp installed SEXML.
 
 `(<:augment-with-doctype "html" "")` simply means that if we use the `<:html` function, the result will have an html5 doctype line added to the result.
 
@@ -33,7 +33,7 @@ The one I'm going to be using for some of my examples is the Common Lisp port of
 ## closure-template
 
 For more, read the excellent [documentation][docs] and check out the examples at the [github repo][clct].
-	
+
 ### Concepts
 
 A closure template can be defined either in a file or a string. Both starting with a namespace declaration, and subsequent template definitions. Here is a simple example:
@@ -41,7 +41,7 @@ A closure template can be defined either in a file or a string. Both starting wi
 {:lang="html"}
 ~~~~~~~~
 {namespace hello}
- 
+
 {template main}
   <h1>Hello World</h1>
 {/template}
@@ -61,15 +61,15 @@ Once compiled, this code will generate a Common Lisp package named `hello` and c
  => "<h1>Hello World</h1>"
 ~~~~~~~~
 
-Each template namespace would usually live in a file ending in `.tmpl` by convention, and be compiled in our files. 
+Each template namespace would usually live in a file ending in `.tmpl` by convention, and be compiled in our files.
 
-The template commands have a fairly simple syntax: The command name, enclosed in `{}`. 
+The template commands have a fairly simple syntax: The command name, enclosed in `{}`.
 
 Notice that the `{template}` tag had to be closed with `{/template}`, some tags like namespace don't need to be closed, while others do. 
 
 (Note: There can be only one namespace declaration per file.)
 
-If we saved our template in a file, named say `main.tmpl`, we can compile it and run it at the repl like so. :
+If we saved our template in a file, named say `main.tmpl`, we can compile it and run it at the repl like so:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -96,7 +96,7 @@ Create the file templates/main.tmpl and put the following code into it:
 {:lang="html"}
 ~~~~~~~~
 {namespace closure-hello.view}
- 
+
 {template main}
   <html>
     <head>
@@ -134,7 +134,7 @@ Now, let's load the system, and see if our template compiled:
  => "<html> <head> <title></title> </head> <body>  </body> </html>"
 ~~~~~~~~
 
-Let's examine the new syntax in the template. Tags starting with a `$`, like `{$title}` simply print the content of the variable `title` to be into the output of the template. It's actually a short hand for the expression `{print title}`, but since it is used very often it was shortened to just `$`. Variables are passed to templates like as plists. like so:
+Let's examine the new syntax in the template. Tags starting with a `$`, like `{$title}` simply print the content of the variable `title` to be into the output of the template. It's actually a short hand for the expression `{print title}`, but since it is used very often it was shortened to just `$`. Variables are passed to templates like as plists. Like so:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -142,7 +142,21 @@ Let's examine the new syntax in the template. Tags starting with a `$`, like `{$
  => "<html> <head> <title>hello</title> </head> <body> <h1>world</h1> </body> </html>"
 ~~~~~~~~
 
-The | in the expression `{$body | noAutoescape}` is used to give the `print` command optional directives. In this case the `noAutoescape` directive, which turns off auto escaping, which is on by default and would escape the html we want to put into the body. For example if the directive wasn't there, this is what we would get:
+And here is the output pretty printed, just so you can see that it worked:
+
+{:lang="html"}
+~~~~~~~~
+<html>
+  <head>
+    <title>hello</title>
+  </head>
+  <body>
+    <h1>world</h1>
+  </body>
+</html>
+~~~~~~~~
+
+The | in the expression `{$body | noAutoescape}` is used to give the `print` command optional directives. In this case the `noAutoescape` directive, which turns off auto escaping, which is on by default and would escape the html we want to put into the body. This would make the browser not render it, but display the html directly. For example if the directive wasn't there, this is what we would get:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -150,7 +164,7 @@ The | in the expression `{$body | noAutoescape}` is used to give the `print` com
  => "<html> <head> <title>hello</title> </head> <body> &lt;h1&gt;world&lt;/h1&gt; </body> </html>"
 ~~~~~~~~
 
-The `<h1>` tag got replaced with `&lt;h1&gt;`, and `</h1>` with `&lt;/h1&gt;`. 
+The `<h1>` tag got replaced with `&lt;h1&gt;`, and `</h1>` with `&lt;/h1&gt;`.
 
 Lets define a handler, this is how the closure-hello.lisp file looks like:
 
@@ -165,7 +179,7 @@ Lets define a handler, this is how the closure-hello.lisp file looks like:
 (restas:define-route main ("")
   (closure-hello.view:main
    (list :title "Hello World"
-	 :body "<h1>Hello World</h1>")))
+         :body "<h1>Hello World</h1>")))
 ~~~~~~~~
 
 Now we just quickload it, and start the server:
@@ -215,22 +229,21 @@ Now lets add the handler in `closure-hello.lisp`, first we define a variable nam
 (restas:define-route main ("")
   (closure-hello.view:main
    (list :title "Hello World"
-	 :body "<h1>Hello World</h1>")))
+         :body "<h1>Hello World</h1>")))
 
 (restas:define-route todos ("todos")
   (closure-hello.view:main
    (list :title "Tasks for today"
-	 :body (closure-hello.view:todos (list :todos *todos*)))))
+         :body (closure-hello.view:todos (list :todos *todos*)))))
 ~~~~~~~~
 
-
-Notice that the code for the `todos` route is pretty much the same as for `main`, but we pass the output of the `todos` template to the body parameter of the `main` template, here is how it should look like in the browser:
+Notice that the code for the `todos` route is pretty much the same as for `main`, but we pass the output of the `todos` template to the body parameter of the `main` template, here is how it should look like in the browser when you navigate to the [http://localhost:8080/todos] url:
 
 ![](images/c3i2.png)
 
 ### Adding logic
 
-Closure has support for conditionals, we'll only take a look at a simple example using if. The syntax is pretty straight-forward:
+Closure has support for conditionals, we'll only take a look at a simple example using `if`. The syntax is pretty straight-forward:
 
 ~~~~~~~~
 {if <expression1>}
@@ -253,11 +266,11 @@ We want to add a link at the top of our main page to our todos page, but we also
     </head>
     <body>
       {if $main}
-	<a href="/todos">Todos</a>
+        <a href="/todos">Todos</a>
       {elseif $todos}
-	<a href="/">Home</a>
+        <a href="/">Home</a>
       {else}
-	<h1>Where am i?</h1>
+        <h1>Where am i?</h1>
       {/if}
       {$body | noAutoescape}
     </body>
@@ -280,14 +293,14 @@ There are two new variables that we could pass to the main template, `$main`, wh
 (restas:define-route main ("")
   (closure-hello.view:main
    (list :title "Hello World"
-	 :main t
-	 :body "<h1>Hello World</h1>")))
+         :main t
+         :body "<h1>Hello World</h1>")))
 
 (restas:define-route todos ("todos")
   (closure-hello.view:main
    (list :title "Tasks for today"
-	 :todos t
-	 :body (closure-hello.view:todos (list :todos *todos*)))))
+         :todos t
+         :body (closure-hello.view:todos (list :todos *todos*)))))
 
 (restas:define-route lost ("lost")
   (closure-hello.view:main
@@ -319,8 +332,8 @@ And finally, a route can return a list, in which case something called the route
 (restas:define-route main ("")
   (:render-method #'closure-hello.view:main)
   (list :title "Hello World"
-	:main t
-	:body "<h1>Hello World</h1>"))
+        :main t
+        :body "<h1>Hello World</h1>"))
 ~~~~~~~~
 
 But we'd have to do that for all of the routes, and they all use the same render method. We could instead have a default render method for the entire module, in `defmodule.lisp`:
@@ -346,13 +359,13 @@ And then have all of the routes simply return lists:
 
 (restas:define-route main ("")
   (list :title "Hello World"
-	:main t
-	:body "<h1>Hello World</h1>"))
+        :main t
+        :body "<h1>Hello World</h1>"))
 
 (restas:define-route todos ("todos")
   (list :title "Tasks for today"
-	:todos t
-	:body (closure-hello.view:todos (list :todos *todos*))))
+        :todos t
+        :body (closure-hello.view:todos (list :todos *todos*))))
 
 (restas:define-route lost ("lost")
   (list :title "Are we lost?"))
@@ -360,7 +373,7 @@ And then have all of the routes simply return lists:
 
 Pretty neat, huh? 
 
-### Tips for emacs users.
+### Tips for Emacs users.
 
 closure-template-html-mode is in Marmalade, so you can install it from there. You can also use the chord `C-c C-l` to compile template files using slime, if `closure-template` is loaded into your lisp image.
 
@@ -383,4 +396,4 @@ Keep in mind that in order to keep the examples simpler I will not use `closure-
 [gct]: https://developers.google.com/closure/templates/
 [commands]: https://developers.google.com/closure/templates/docs/commands
 [cliki]: http://www.cliki.net/
-[gen]: http://www.cliki.net/HTML%20generator 
+[gen]: http://www.cliki.net/HTML%20generator
