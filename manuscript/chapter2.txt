@@ -1,10 +1,10 @@
 # Setting up a project
 
-Single file apps are fine and dandy, but things will start getting ugly as we increase the complexity of our applications. In this chapter we'll learn about ASDF systems and how to structure our projects. I'll also introduce a small utility for generating a restas project skeleton. 
+Single file apps are fine and dandy, but things will start getting ugly as we increase the complexity of our applications. In this chapter we'll learn about ASDF systems and how to structure our projects. I'll also introduce a small utility for generating a restas project skeleton.
 
 ## Systems
 
-ASDF is a build system for Common Lisp. An ASDF system contains information on the files that are part of your app, and in what order are they to be compiled and loaded into the system. It also knows about the dependencies of your application. Lisp systems come with ASDF, and if you installed Quicklisp, you also have an easy way to download and load existing ASDF systems. 
+ASDF is a build system for Common Lisp. An ASDF system contains information on the files that are part of your app, and in what order are they to be compiled and loaded into the system. It also knows about the dependencies of your application. Lisp systems come with ASDF, and if you installed Quicklisp, you also have an easy way to download and load existing ASDF systems.
 
 Defining an ASDF system is easy, the definition is contained in a small file in your project directory with an `.asd` extension. We'll see in a moment what such a file looks like. Code in the ASD file is lisp, so you shouldn't have problems reading and understanding it.
 
@@ -60,7 +60,7 @@ This will create a new directory called `hello-world` in `local-projects`. Lets 
 └── tests/
 ~~~~~~~~
 
-`hello-world` contains 3 files and 3 directories. `static` is for  any static content we might have, it's 3 sub-directories `css`, `images` and `js` are for css, image files and JavaScript source files respectively. The `templates` directory is for template files we'll write later on. And the `tests` directory is for putting unit tests, since we didn't tell `restas-project` to generate a test ASDF system, this directory will be unused for now. 
+`hello-world` contains 3 files and 3 directories. `static` is for any static content we might have, it's 3 sub-directories `css`, `images` and `js` are for css, image files and JavaScript source files respectively. The `templates` directory is for template files we'll write later on. And the `tests` directory is for putting unit tests. Since we didn't tell `restas-project` to generate a test ASDF system, this directory will be unused for now.
 
 ### hello-world.asd
 
@@ -69,7 +69,7 @@ Let's look at the files. First we have the system definition file `hello-world.a
 {:lang="common-lisp"}
 ~~~~~~~~
 (defpackage #:hello-world-config (:export #:*base-directory*))
-(defparameter hello-world-config:*base-directory* 
+(defparameter hello-world-config:*base-directory*
   (make-pathname :name nil :type nil :defaults *load-truename*))
 
 (asdf:defsystem #:hello-world
@@ -82,15 +82,15 @@ Let's look at the files. First we have the system definition file `hello-world.a
                (:file "hello-world")))
 ~~~~~~~~
 
-The first 3 lines define a config package, we use it simply to have a reference in our running application to the directory the source is located, since we'll need access to static resources that aren't lisp source files, like css files and template files. These lines are not important, the important part is the `defsystem` definition, let's look it line by line.
+The first 3 lines define a config package, we use it simply to have a reference in our running application to the directory the source is located, since we'll need access to static resources that aren't lisp source files, like css files and template files. These lines are not that important, the important part is the `defsystem` definition, let's look it line by line.
 
-First we give our system a name, in this case `#:hello-world`. The next line `:serial t` tells asdf that we want our files to be loaded in the order we specify them, since code in latter files might depend on previous files. 
+The first argument to `defsystem` is the system name, in this case `#:hello-world`. The next line `:serial t` tells asdf that we want our lisp files to be loaded in the order we specify them, since code in latter files might depend on previous files.
 
-Following are 3 description lines, the keys `:description`, `:author` and `:license` specify additional info about our system, the system will still run fine without them, but it is a good idea to include that information here. For now, we won't bother with editing it.
+Following are 3 description lines. The keys `:description`, `:author` and `:license` specify additional info about our system, the system will still run fine without them, but it is a good idea to include that information here. For now, we won't bother with editing it.
 
-Next, with the key `:depends-on` we list our library dependencies, in this case it contains only Restas, but can have any number of names of asdf systems. 
+Next, with the key `:depends-on` we list our library dependencies. In this case it contains only Restas, but can have any number of names of asdf systems.
 
-The `:components` key tells ASDF what files are in our system. In this case only `defmodule.lisp` and `hello-world.lisp`. Note the syntax, components are specified as a list of lists, starting with the keyword `:file` followed by the name of the file, without the extension. So `defmodule.lisp` is specified as `(:file "defmodule")`. 
+The `:components` key tells ASDF what files are in our system. In this case only `defmodule.lisp` and `hello-world.lisp`. Note the syntax, components are specified as a list of lists, starting with the keyword `:file` followed by the name of the file, without the extension. So `defmodule.lisp` is specified as `(:file "defmodule")`.
 
 ### defmodule.lisp
 
@@ -112,11 +112,11 @@ In the file `defmodule.lisp` we define our packages and modules included in our 
   (merge-pathnames #P"static/" hello-world-config:*base-directory*))
 ~~~~~~~~
 
-This should seem mostly familiar, it simply defines a module named `#:hello-world` like we did in the previous chapter. Note however that the script did not add `#:restas` as a package to be imported into the `hello-world` package. This is because I personally prefer to qualify symbol names with their package name, so I would write `restas:define-route` instead of `define-route`. If you prefer otherwise, change that form to `(:use #:cl #:restas)`.
+The first lisp form should seem mostly familiar, it simply defines a module named `#:hello-world` like we did in the previous chapter. Note however that the script did not add `#:restas` as a package to be imported into the `hello-world` package. This is because I personally prefer to qualify symbol names with their package name, so I would write `restas:define-route` instead of `define-route`. If you prefer otherwise, change that form to `(:use #:cl #:restas)`.
 
-Next we define two variables, called `*template-directory*` and `*static-directory*`, if we happen to need to find the files that might be present there. 
+Next we define two variables, called `*template-directory*` and `*static-directory*`, if we happen to need to find the files that might be present there.
 
-This is it for `defmodule.lisp`. 
+This is it for `defmodule.lisp`.
 
 ### hello-world.lisp
 
@@ -168,4 +168,8 @@ You can stop the server either by exiting lisp, or by typing the following:
 {:lang="common-lisp"}
 ~~~~~~~~
 (restas:stop-all)
-~~~~~~~~ 
+~~~~~~~~
+
+## Conclusion
+
+That's it for project organization for now. Next up, we'll explore HTML generation and output with templates and a neat DSL for XML/HTML output.
