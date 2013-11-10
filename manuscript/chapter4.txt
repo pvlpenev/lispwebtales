@@ -12,7 +12,7 @@ First, let's create the project:
  * (restas-project:start-restas-project "blogdemo" :depends-on '(:sexml))
 ~~~~~~~~
 
-Let's edit the `blogdemo.asd` to add a template.lisp file:
+Let's edit the `blogdemo.asd` to add a template.lisp file for our SEXML templates:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -29,7 +29,7 @@ Let's edit the `blogdemo.asd` to add a template.lisp file:
 
 ## Setting up defmodule.lisp
 
-We'll need to edit `defmodule.lisp` to add `restas` in the `:use` list of `define-module`:
+We'll need to edit `defmodule.lisp` to add `restas` in the `:use` list of `define-module` form:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -81,7 +81,7 @@ First, Let's create a template.lisp file, like we specified in the `asd` file. W
 (<:augment-with-doctype "html" "" :auto-emit-p t)
 ~~~~~~~~
 
-I've gone a bit crazy with redefining `html-frame`. When we start our app with `restas:start` we'll specify `html-frame` as the default render method for the module. Since by convention render methods take a plist of data to be displayed, that's what the new version will take, the parameter is called `context`. I've also defined a menu with a link to the home page, and conditionally displaying either a link to add a post or log out, or a link to log in.
+I've gone a bit crazy with redefining `html-frame`. When we start our app with `restas:start` we'll specify `html-frame` as the default render method for the module. Since by convention render methods take a plist of data to be displayed as a single parameter, that's what the new version will take. That parameter we'll call `context`. I've also defined a menu with a link to the home page, and conditionally displaying either a link to add a post or log out, or a link to log in.
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -256,7 +256,7 @@ Next, let's handle logging in and out. The `login` route is pretty simple:
         :body (login-form)))
 ~~~~~~~~
 
-We'll handle the form in the `login/post` route. Again, We'll just check for the username and password being "user" and "pass" respectively. If they match, we start a hunchentoot session, set the session value of `:username` to "user" and redirect back to the home page. If the login wasn't successful, we redirect back to the login page:
+We'll handle the form in the `login/post` route. Again, we'll just check for the username and password being "user" and "pass" respectively. If they match, we start a hunchentoot session, set the session value of `:username` to "user" and redirect back to the home page. If the login wasn't successful, we redirect back to the login page:
 
 
 {:lang="common-lisp"}
@@ -322,7 +322,7 @@ The `add/post` route that handles the `add` form is unchanged, and so is the slu
 
 ## Post chapter refactoring
 
-The app is still not pretty enough. Let's reorganize it a bit. The functions `slug`, `validate-post-id`, `get-authors`, `validate-author-id`, and `logged-on-p` are utility functions, let's move them to a file called util.lisp. First, let's add the file to `blogdemo.asd`:
+The app is still not pretty enough. Let's reorganize it a bit. The functions `slug`, `validate-post-id`, `get-authors`, `validate-author-id`, and `logged-on-p` are utility functions, let's move them to a file called util.lisp. That way `blogdemo.lisp` can contain only routes. First, let's add the file to `blogdemo.asd`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -346,7 +346,7 @@ Note that `util.lisp` comes before `template.lisp` and `blogdemo.lisp`, since I'
   (start '#:blogdemo :port port :render-method 'html-frame))
 ~~~~~~~~
 
-Note that it is here that we specify the render method for the module. We couldn't have done it in the `define-module` form, since the symbol `blogdemo::html-template` didn't exist before the package was created, so we would have to define a separate package for the templates, like `closure-template` does and export all of the symbols from that package so we can use them in the routes. On top of that, since we use route symbol names in the templates to generate urls, we would have to either export all of the route names from `blogdemo` or rewrite the templates not to use `genurl`. Before the fix mentioned in the beginning of the chapter, I considered doing exactly this, fortunately I didn't have to, since it would have made the code a lot more complicated.
+Note that it is here that we specify the render method for the module. We couldn't have done it in the `define-module` form, since the symbol `blogdemo::html-template` didn't exist before the package was created, so we would have to define a separate package for the templates, like `closure-template` does and export all of the symbols from that package so we can use them in the routes. On top of that, since we use route symbol names in the templates to generate urls, we would have to either export all of the route names from `blogdemo` or rewrite the templates not to use `genurl`. Before a fix included in a restas update to allow for a `:render-method` argument to `restas:start` I considered doing exactly this. Fortunately I didn't have to, since it would have made the code a lot more complicated.
 
 Next, we need to export `start-blogdemo` from the `blogdemo` module, in `defmodule.lisp`:
 
