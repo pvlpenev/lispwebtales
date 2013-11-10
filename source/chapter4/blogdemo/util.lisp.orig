@@ -2,11 +2,27 @@
 
 (in-package #:blogdemo)
 
+<<<<<<< Updated upstream
 (defun validate-post-id (id)
   (let ((id (parse-integer id :junk-allowed t)))
     (if (< id (length *posts*))
         id
         nil)))
+=======
+;;; utils
+
+(defun slug (string)
+  (substitute #\- #\Space
+	      (string-downcase
+	       (string-trim '(#\Space #\Tab #\Newline)
+			    string))))
+
+(defun validate-post-id (id)
+  (let ((id (parse-integer id :junk-allowed t)))
+    (if (< id (length *posts*))
+	id
+	nil)))
+>>>>>>> Stashed changes
 
 (defun get-authors ()
   (loop for post in *posts*
@@ -18,6 +34,7 @@
 (defun logged-on-p ()
   (hunchentoot:session-value :username))
 
+<<<<<<< Updated upstream
 (defun slug (string)
   (substitute #\- #\Space
     (string-downcase
@@ -26,3 +43,8 @@
 
 (defun start-blogdemo (&optional (port 8080))
   (start '#:blogdemo :port port :render-method 'html-frame))
+
+=======
+(defun start-blogdemo (&optional (port 8080))
+  (start '#:blogdemo :port port :render-method 'html-frame))
+>>>>>>> Stashed changes
