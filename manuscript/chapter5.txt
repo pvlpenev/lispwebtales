@@ -2,9 +2,9 @@
 
 ## Introduction
 
-I think we've written enough horrible code for the sake of simplicity and now I want to focus on "doing it right", to the best of my abilities, meaning, I want to use a real database. The example app I'll show you in the next few chapters will be a simple reddit-like link sharing site. As an exercise, you can later go back and redo the previous blog example app to use a database.
+I think we've written enough horrible code for the sake of simplicity and now I want to focus on "doing it right", to the best of my abilities, meaning, I want to use a real database. The example app I'll show you in the next few chapters will be a simple Reddit-like link sharing site. As an exercise, you can later go back and redo the previous blog example app to use a database.
 
-In this chapter I'll use PostgreSQL and the excellent `postmodern` library, which is specific to Postgres.  Other options exist, from the popular "NoSQL" datastores like redis and mongodb, to lisp specific object stores, like `bknr-datastore`. We'll implement a database layer in several of these stores. I'll show you how to use the Restas policy mechanism to define a singe interface to the various back-ends.
+In this chapter I'll use PostgreSQL and the excellent `postmodern` library, which is specific to Postgres.  Other options exist, from the popular "NoSQL" data stores like Redis and MongoDB, to lisp specific object stores, like `bknr-datastore`. We'll implement a database layer in several of these stores. I'll show you how to use the Restas policy mechanism to define a single interface to the various back-ends.
 
 ## Setting up PostgreSQL
 
@@ -18,7 +18,7 @@ Install postgresql using your distros package manager, for Debian based distros 
 
 I also usually install the graphical admin tool `pgadmin3` but it is optional.
 
-Next we need to set up a database, and a user for it. Postgres administration is done with the user `postgres`. Log in from the shell, and start `psql`(the postgres shell):
+Next we need to set up a database and a user for it. Postgres automatically creates a system user account named `postgres` for  administration of the database server. Log in from the shell, and start `psql`(the postgres shell) so we can configure it to our needs:
 
 ~~~~~~~~
  # su - postgres
@@ -47,7 +47,7 @@ On windows 7 you will have to run the installer as an Administrator. The install
 
 At the end of the installation, deselect the check-box "Launch Stack Builder at exit?", we won't be needing that. Click finish. 
 
-After the installation completes, click the start menu, navigate to the PostgreSQL sub-menu and open "SQL Shell(psql)". It will prompt you for a servername, database, port, and user, press Enter on all four for the default values. Then it will ask for the `postgres` user password, type it in and press Enter. 
+After the installation completes, click the start menu, navigate to the PostgreSQL sub-menu and open "SQL Shell(psql)". It will prompt you for a server name, database, port and user. Press Enter on all four for the default values. Then it will ask for the `postgres` user password, type it in and press Enter. 
 
 Next, we need to create a pg user and a database, I'll name the user `linkdemouser` and the database `linkdemo`, then we quit with the `\q` command:
 
@@ -59,11 +59,11 @@ Next, we need to create a pg user and a database, I'll name the user `linkdemous
 
 That's it.
 
-## What is a policy
+## What is a policy?
 
 Although we don't need to do so, we'll use the restas policy mechanism to define an interface to our database. But first lets have a short discussion of the problem policies solve for us.
 
-In our app, if we need to access the database, we'll have a bunch of queries, usually they are encapsulated in a function. So for example we might have a set of function like `(find-user id)` and `(auth-user username password)` which both contain database queries written using postmodern for example. Lets say we want to have the option of using MySQL or some other backend and be able to switch them. Common Lisp has a powerful OO system that allows us to do this easily. In our project we can define a variable called for example `*datastore*` and depending on its value, a different implementation of our database layer gets used. Using generic functions this is easy, we simply define a class for each layer, for example:
+In our app, if we need to access the database we'll have a bunch of queries. Usually they are encapsulated in functions. So for example we might have a set of function like `(find-user id)` and `(auth-user username password)` which both contain queries written using postmodern. Lets say we want to have the option of using MySQL or some other backend and be able to switch between them. Common Lisp has a powerful OO system that allows us to do this easily. In our project we can define a variable called for example `*datastore*` and depending on its value a different implementation of our database layer gets used. Using generic functions this is easy, we simply define a class for each layer, for example:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -89,12 +89,11 @@ Now, the functions `find-user` and `auth-user` can be defined in terms of generi
   (datastore-auth-user *datastore* username password))
 ~~~~~~~~
 
-Here `datastore-find-user` and `datastore-auth-user` are both methods defined on the `postmodern-datastore` and `mysql-datastore` classes, an instance of which we pass as the first argument. This pattern is fairly common, and restas provides a mechanism, called a policy, for generating all of the boilerplate necessary for it, such as defining the generic functions, the dispatch variable, the functions that call the methods, and optionally, various packages to put all of the stuff in.  
-
+Here `datastore-find-user` and `datastore-auth-user` are both methods defined on the `postmodern-datastore` and `mysql-datastore` classes, an instance of which we pass as the first argument. This pattern is fairly common, and restas provides a mechanism, called a policy, for generating all of the boilerplate necessary for it, such as defining the generic functions, the dispatch variable, the functions that call the methods, and optionally, various packages to put all of the stuff in, etc.  
 
 ## Creating the project
 
-Let's create the project skeleton with `restas-project`:
+Now let's get on with writing our link sharing site. Let's create the project skeleton with `restas-project`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -107,11 +106,11 @@ Let's create the project skeleton with `restas-project`:
                   :babel))
 ~~~~~~~~
 
-The `ironclad` and `babel` libraries will be used to hash the user passwords.
+Other than postmodern and sexml, we'll need the `ironclad` and `babel` libraries which will be used to hash the user passwords.
 
 ### Defining the policy
 
-Our next order of business is to define our policy, and all of the packages well be using. `restas:define-policy` has the following syntax:
+Our next order of business is to define our policy, and all of the packages we'll be using. `restas:define-policy` has the following syntax:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -121,8 +120,18 @@ Our next order of business is to define our policy, and all of the packages well
   (:internal-package <internal-package-name>)
   (:internal-function-template <internal-function-template>)
   
-  <method-definitions>)
+  (define-method <method-name> (args...)
+    "Documentation string")
+    
+  <more method-definitions>)
 ~~~~~~~~
+
+What this does is:
+
+ * Defines a dynamic variable with the same name as the policy:  `*policy-name*` 
+ * Defines an interface package where all of the generic functions will be defined. This package will be used by the policy implementation we'll write for the specific backends
+ * Defines an internal package where the functions calling the methods will reside. This is the package our app will be using to access the database, instead of using the generic functions directly
+ * We can specify name templates for the functions and the methods. For example if we define a policy method `foo` we can say that we want the corresponding generic function to be called `generic-foo` and the internal function to be called `foo-bar`. We do this by specifying a format string(the new names are generated with `format`) to the declarations in the policy definition: `"GENERIC-~A"` and `"~A-BAR"` respectively.
 
 In our case, this is the concrete example declaration we'll be putting in `defmodule.lisp`, also containing two method declarations for `find-user` and `auth-user`(there are more methods, but we'll add them later):
 
@@ -134,19 +143,19 @@ In our case, this is the concrete example declaration we'll be putting in `defmo
   (:internal-package #:linkdemo.datastore)
   
   (define-method find-user (username)
-    "find the user by username")
+    "Find the user by username")
   
   (define-method auth-user (username password)
     "Check if a user exists and has the suplied password"))
 ~~~~~~~~
 
-The policy is named datastore, which means that the dynamic variable controlling dispatch will be names `*datastore*`. This variable is defined is the internal package, in our case named `linkdemo.datastore`. This package will also include the functions we actually call in our app, such as `find-user`. The interface package is called `linkdemo.policy.datastore` and this is where the generic functions that define our interface to the database are defined. This package will be included in the packages where we implement the various backends. 
+The policy is named `datastore`, which means that the dynamic variable controlling dispatch will be named `*datastore*`. This variable is defined in the internal package, in our case named `linkdemo.datastore`. This package will also include the functions we actually call in our app, such as `find-user`. The interface package is called `linkdemo.policy.datastore` and this is where the generic functions that define our interface to the database are defined.
 
-Notice the declarations `:interface-method-template` and `internal-function-template`. These declarations define rules for renaming the various policy methods, so for instance the generic function for `find-user` in the intefrace package will be named `datastore-find-user`. I opted to skip defining such a rule for the functions in the internal package, but I could have done the same thing there. Both declarations use format strings to generate the new names. 
+Notice the declaration of `:interface-method-template`. The declaration means that we want the generic functions in the interface package to be renamed according to the template `"DATASTORE-~A"` so for instance the generic function for `find-user` will be named `datastore-find-user`. I opted to skip defining such a rule for the functions in the internal package, but I could have done the same thing using `:internal-function-template`.
 
-Also notice that method declarations are done with `define-method`. Do not be confused, methods in CL are defined with `defmethod`, and here `define-method` is just part of the syntax of the `define-policy` macro. The argument lists of these method declarations will be the same as the functions in `linkdemo.datastore`. The argument lists of the generic methods in `linkdemo.policy.datastore` will have an extra argument called `datastore` which will be used for dispatch. 
+Also notice that method declarations are done with `define-method`. Do not be confused! Methods in Common Lisp are defined with `defmethod`, and here `define-method` is just part of the syntax of the `define-policy` macro. The argument lists of these method declarations will be the same as the functions in `linkdemo.datastore`. The argument lists of the generic functions in `linkdemo.policy.datastore` will have an extra argument called `datastore` which will be used for dispatch. For example `(find-user username)` -> `(datastore-find-user datastore username)`.
 
-Here is the complete interface we will define today, put this at the top of `defmodule.lisp`:
+Here is the complete interface we will define today, complete with all the methods we need. Put this at the top of `defmodule.lisp`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -235,7 +244,7 @@ Next, we create the file `pg-datastore.lisp` in the project directory and add an
 The app will be very simple, it will have users, who can post links, and vote on them. That makes three tables: 
 
 * A `users` table with an id, username and password fields.
-* A `links` table with an id, url, title, and submitter fields, where the sumbitter will be a foreign key to the `users` table.
+* A `links` table with an id, url, title, and submitter fields, where the submitter will be a foreign key to the `users` table.
 * The third table will be called `votes` and we will store all of the upvotes, it will have two fields, both foreign keys to the link and the user who upvoted it.
 
 We could have stored the upvotes as an integer in the `links` table, but then users would be able to vote more than once per link, and we don't want that. 
@@ -255,7 +264,7 @@ In order to use the macro, we'll need to have a variable with the connection spe
                     :accessor connection-spec)))
 ~~~~~~~~
 
-For testing purpouses, I'll create an instance of this class and store it in a variable called `*db*`(in our real app, we'll use `*datastore*` in the internal package):
+For testing purposes, I'll create an instance of this class and store it in a variable called `*db*`(in our real app, we'll use `*datastore*` in the internal package):
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -490,7 +499,7 @@ When we create and authenticate a user we'll need a way to find if a user alread
 	   :plist)))
 ~~~~~~~~
 
-Next, when a user logges in, we simply find the user, and check if the password matches, if so, we return the username. If no such user exists or the passwords don't match, we return nil:
+Next, when a user logs in, we simply find the user, and check if the password matches, if so, we return the username. If no such user exists or the passwords don't match, we return nil:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -600,8 +609,6 @@ We'll augment the link plist with two keys: `:votes` is the number of votes the 
                     :voted-p (datastore-upvoted-p datastore id username)
                     link)))
 ~~~~~~~~
-
-
 
 The simplest way I found to get them sorted is using common lisps `sort` function:
 
