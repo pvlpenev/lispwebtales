@@ -194,7 +194,7 @@ Here is the complete interface we will define today, complete with all the metho
 
 ### Defining the rest of the packages
 
-Next, we need to define the restas module for our application, and the package where we will implement the policy interface for PostgreSQL, put these after the policy declaration:
+Next, we need to define the restas module for our application, and the package where we will implement the policy interface for PostgreSQL, put this code after the policy declaration in `defmodule.lisp`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -247,13 +247,11 @@ The app will be very simple, it will have users, who can post links, and vote on
 * A `links` table with an id, url, title, and submitter fields, where the submitter will be a foreign key to the `users` table.
 * The third table will be called `votes` and we will store all of the upvotes, it will have two fields, both foreign keys to the link and the user who upvoted it.
 
-We could have stored the upvotes as an integer in the `links` table, but then users would be able to vote more than once per link, and we don't want that. 
-
-If you are familiar with the basics of relational databases, this would be the most straightforward way to model our data.
+We could have stored the upvotes as an integer in the `links` table, but then users would be able to vote more than once per link, and we don't want that. What we need in this case is a many to many relation. If you are familiar with the basics of relational databases, this would be the most straightforward way to model our data.
 
 ## Connecting
 
-There are two ways to connect to a PostgreSQL database, using the macro `with-connection` whose body will be executed in the context of a connection. Or using `connect-toplevel` which will create a connection and setup the special variable `*database*` to the new connection. This variable is used to execute queries. `with-connection` automatically binds it in its body. I'll be using `with-connection` for our code, but `connect-toplevel` is useful for testing at the REPL. 
+There are two ways to connect to a PostgreSQL database, using the macro `with-connection` whose body will be executed in the context of a connection. Or using `connect-toplevel` which will create a connection and setup the special variable `*database*` to the new connection. This variable is used to execute queries. `with-connection` automatically binds it in its body. I'll be using `with-connection` for our code, but `connect-toplevel` is useful for testing at the REPL so we don't have to wrap all of our queries in `with-connection`.
 
 In order to use the macro, we'll need to have a variable with the connection spec, which has the following form: `(database user password host)`. The connection spec will be stored in a slot of our `pg-datastore` class(the one used for dispatch).  Let's define this class in `pg-datastore.lisp`:
 
@@ -270,7 +268,7 @@ For testing purposes, I'll create an instance of this class and store it in a va
 ~~~~~~~~
 (defparameter *db*
   (make-instance 'pg-datastore
-		 :connection-spec '("linkdemo" "linkdemouser" "mypass" "localhost")))
+                 :connection-spec '("linkdemo" "linkdemouser" "mypass" "localhost")))
 ~~~~~~~~
 
 We can now do this:
@@ -282,11 +280,11 @@ We can now do this:
   )
 ~~~~~~~~
 
-## Defining the tables. 
+## Defining the tables.
 
 ### DAO classes
 
-Postmodern isn't an ORM, so if you're used to them from places like Django or Rails, you're in luck, because in my very humble opinion, they suck. If you're using a RDBMS, learn the relational model already. Even though it isn't an ORM, postmodern does allow us to work with objects, but they are just simple DAOs(Database Access Objects). DAO objects are defined the same way ordinary lisp objects are, using `defclass`, but they have a slightly different syntax, and we need to add the `dao-class` metaclass to the definition. Here is how the `users` table will be defined:
+Postmodern isn't an ORM, so if you're used to them from places like Django or Rails, you're in luck, because in my very humble opinion, they suck. If you're using a RDBMS, learn the relational model already. Now that I got that rant out of the way, lets move on. Even though it isn't an ORM, postmodern does allow us to work with objects, but they are just simple DAOs(Database Access Objects). DAO objects are defined the same way ordinary lisp objects are, using `defclass`, but they have additional syntax for giving database types to our slots, and we need to add the `dao-class` [^metaclass] to the definition. Here is how the `users` table will be defined:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -299,7 +297,9 @@ Postmodern isn't an ORM, so if you're used to them from places like Django or Ra
   (:keys id))
 ~~~~~~~~
 
-The difference between a standard class definition and a dao class is that we have a `:col-type` option to slot definitions that specify what database type we want to create. In our case, `id` will be a `serial` meaning an integer that will auto-increment every time we add a record. The other two fields will be strings. We specify `dao-class` as a metaclass for our class, and we also specify that we want `id` to be a primary key. The `password` and `hash` slots will contain the password hash and salt from encrypting the password of the user. We can see what SQL will be generated by this definition with `dao-table-definition`:
+The difference between a standard class definition and a dao class is that we have a `:col-type` option to slot definitions that specify what database type we want to create. In our case, `id` will be a `serial` which is the PostgreSQL type for an integer that will auto-increment every time we add a record. The other two fields will be strings. In order to add the `:col-type` option to our slots, as well as other additions to our dao classes we must specify `dao-class` as a metaclass. Metaclasses are the standard Common Lisp mechanism for extending the object system. We also specify that we want `id` to be a primary key. The `password` and `salt` slots will contain the password hash and salt from encrypting the password of the user.
+
+We can see what SQL code will be generated by this definition with `dao-table-definition`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -311,9 +311,9 @@ It will give us the following output as a string(formatting by me):
 {:lang="SQL"}
 ~~~~~~~~
 CREATE TABLE users (
-  id SERIAL NOT NULL, 
-  name TEXT NOT NULL, 
-  password TEXT NOT NULL, 
+  id SERIAL NOT NULL,
+  name TEXT NOT NULL,
+  password TEXT NOT NULL,
   salt TEXT NOT NULL,
   PRIMARY KEY (id)
 )
@@ -329,7 +329,7 @@ Lets implement the method used for initiating the datastore, creating the tables
       (execute (dao-table-definition 'users)))))
 ~~~~~~~~
 
-First we connect to the database, then, using the `table-exists-p` predicate we check if the table is already defined, if it isn't, we use the `execute` function, which will execute an SQL expression, in our case, it will be the output of `dao-table-definition`. Later we'll augment this method with the definitions of the other tables.
+First we connect to the database, then, using the `table-exists-p` predicate we check if the table is already defined. If it isn't, we use the `execute` function, which will execute an SQL expression, in our case, it will be the output of `dao-table-definition`. Later we'll augment this method with the definitions of the other tables.
 
 We can call this method like this:
 
@@ -342,13 +342,13 @@ After the table is defined, we can add users by instantiating objects of the `us
 
 {:lang="common-lisp"}
 ~~~~~~~~
-(with-connection (connection-spec *db*) 
+(with-connection (connection-spec *db*)
   (insert-dao (make-instance 'users
                              :name "user"
                              :password "pass")))
 ~~~~~~~~
 
-### Querying 
+### Querying
 
 Say we've added a bunch of users to the db, we can now query them in two ways, as DAOs, or as an ordinary table. The dao way is with `select-dao`, which returns a list of lisp objects:
  
@@ -356,39 +356,39 @@ Say we've added a bunch of users to the db, we can now query them in two ways, a
 ~~~~~~~
  * (with-connection (connection-spec *db*)
      (select-dao 'users ))
-	 
+
  => (#<USERS {10089B4443}> #<USERS {10089B63F3}> #<USERS {10089B69F3}>
  #<USERS {10089B6FF3}>)
 ~~~~~~~
 
-We can also use a normal query(the password and salt values will look a lot different of course):
+We can also use a normal query using `S-SQL`, a lispy syntax for SQL. Have a look at the example(the password and salt values are made up of course):
 
 {:lang="common-lisp"}
 ~~~~~~~
  * (with-connection (connection-spec *db*)
      (query (:select :* :from 'users)))
-	 
- => ((1 "user" "pass" "salt") 
-     (2 "user1" "pass1" "salt1") 
-     (3 "user2" "pass2" "salt2") 
+
+ => ((1 "user" "pass" "salt")
+     (2 "user1" "pass1" "salt1")
+     (3 "user2" "pass2" "salt2")
      (4 "user3" "pass3" "salt3"))
 ~~~~~~~
 
-The `query` form takes an `s-sql` expression, which is a DSL for writing sql from lisp. s-sql operators are keywords. Our query returns a list of lists, with the values in the table. We can get slightly more useful output with the `query` `args/format` optional parameter. The most common values are `:plists` and `:alists`, returning the result in the format of a plist or alist, with the column names. Example:
+The `query` form takes an `S-SQL` expression. S-sql operators are keywords. Our query returns a list of lists, with the values in the table. We can get slightly more useful output with the `query` `args/format` optional parameter which specifies the format of the result. The most common values are `:plists` and `:alists`, returning the result in the format of a plist or alist, with the column names. Example:
 
 {:lang="common-lisp"}
 ~~~~~~~
  * (with-connection (connection-spec *db*)
      (query (:select :* :from 'users) :plists))
-	 
- => ((:ID 1 :NAME "user" :PASSWORD "pass" :SALT "salt") 
+
+ => ((:ID 1 :NAME "user" :PASSWORD "pass" :SALT "salt")
      (:ID 2 :NAME "user1" :PASSWORD "pass1" :SALT "salt1")
-     (:ID 3 :NAME "user2" :PASSWORD "pass2" :SALT "salt2") 
+     (:ID 3 :NAME "user2" :PASSWORD "pass2" :SALT "salt2")
      (:ID 4 :NAME "user3" :PASSWORD "pass3" :SALT "salt3"))
-	 
+
  * (with-connection (connection-spec *db*)
      (query (:select :* :from 'users) :alists))
-	 
+
  => (((:ID . 1) (:NAME . "user") (:PASSWORD . "pass") (:SALT . "salt"))
      ((:ID . 2) (:NAME . "user1") (:PASSWORD . "pass1") (:SALT . "salt1"))
      ((:ID . 3) (:NAME . "user2") (:PASSWORD . "pass2") (:SALT . "salt2"))
@@ -412,7 +412,7 @@ Because `defclass` definitions of dao objects don't support adding foreign keys,
   (:keys id))
 ~~~~~~~~
 
-Next, because we need to add the foreign key constrain, we define a table, which will inherit all of the fields of the dao class:
+Next, because we need to add the foreign key constrain, we use the `deftable` macro to define a table. The table will inherit all of the fields of the dao class:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -453,9 +453,9 @@ Now, let's update the `datastore-init` method to create these tables as well. No
       (create-table 'votes))))
 ~~~~~~~~
 
-## Defining our interface 
+## Defining our interface
 
-What will the interface consist of? We'll need a way to register a user, and authenticate one at login. We'll also need to be able to post a link and upvote a it. Also we'll need a way to get a list of all the links for the home page, and a way to get their score, since we'll want to sort by it. That's about it for a quick version 1. 
+What will the interface consist of? We'll need a way to register a user, and authenticate one at login. We'll also need to be able to post a link and upvote it. Also we'll need a way to get a list of all the links for the home page, and a way to get their score, since we'll want to sort by it. That's about it for a quick version 1.
 
 ### Hashing passwords
 
@@ -472,7 +472,7 @@ The original version of this chapter stored passwords in plain text, I decided t
 
 This code is kind of dense, all you need to know about it is that it returns a plist with a password hash and a salt, ready to be stored into a database.
 
-Checking to see if a password matches involves taking said password, and the password hash and salt, hashing the password using the salt, and comparing hashes:
+Checking to see if a password matches involves taking said password, hash and salt, hashing the password using the salt, and comparing hashes:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -496,10 +496,12 @@ When we create and authenticate a user we'll need a way to find if a user alread
   (with-connection (connection-spec datastore)
     (query (:select :* :from 'users
                     :where (:= 'name username))
-	   :plist)))
+           :plist)))
 ~~~~~~~~
 
-Next, when a user logs in, we simply find the user, and check if the password matches, if so, we return the username. If no such user exists or the passwords don't match, we return nil:
+Note that the argument to query is `:plist` and not the plural `:plists`. This tells postmodern to return just one result.
+
+Next, when a user logs in, we simply find the user, and check if the password matches. If so, we return the username. If no such user exists or the passwords don't match, we return nil:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -520,7 +522,7 @@ And finally registering the user. We check if the user is registered, and if not
     (unless (datastore-find-user datastore username)
       (let ((password-salt (hash-password password)))
         (when
-            (save-dao 
+            (save-dao
              (make-instance 'users
                             :name username
                             :password (getf password-salt :password-hash)
@@ -528,11 +530,11 @@ And finally registering the user. We check if the user is registered, and if not
           username)))))
 ~~~~~~~~
 
-We check to see if the user isn't registered if he isn't, we hash the password, make a DAO object with the username the hash and salt, and save it. The reason `save-dao` is wrapped in a 'when` is to make sure the operation was successful, if so, we return the username. 
+We check to see if the user isn't registered if he isn't, we hash the password, make a DAO object with the username, hash and salt, and save it. The reason `save-dao` is wrapped in a 'when` is to make sure the operation was successful, if so, we return the username.
 
 ### Handling links
 
-In order to handle links properly, let's write a `upvoted-p` predicate method:
+In order to handle links properly, let's write an `upvoted-p` predicate method:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -562,7 +564,7 @@ Upvoting a link involves finding the id of the user, checking if the user hasn't
           link-id)))))
 ~~~~~~~~
 
-For posting a link, we want the user submitting it to also automatically upvote it. In order to do that though, we have to use a DAO, since `query` will not return us the inserted value, and we need the links id in order to upvote it. After we `save-dao` the DAO though, its `link-id` accessor function will return it for us, and we can upvote it, this is how it looks like:
+For posting a link, we want the user submitting it to also automatically upvote it. In order to do that though, we have to use a DAO, since `query` will not return us the inserted value, and we need the links id in order to upvote it. After we `save-dao` the DAO though, its `link-id` accessor function will return it for us and we can upvote it. This is how it looks like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -592,12 +594,12 @@ Now, given a `link-id`, getting the upvote count is as easy as using the sql `CO
 {:lang="common-lisp"}
 ~~~~~~~~
 (defun upvote-count (link-id)
-  (query (:select (:count link-id) :from 'votes 
+  (query (:select (:count link-id) :from 'votes
                   :where (:= link-id 'link-id))
          :single))
 ~~~~~~~~
 
-We'll augment the link plist with two keys: `:votes` is the number of votes the link has, and `voted-p` is a boolean specifying whether or not the currently logged in user has upvoted it, we do this for every link returned by `get-all-links/internal`. We have to pass `datastore` too, because `add-vote-count` calls `datastore-upvoted-p`: 
+We'll need to augment the link plist with two keys: `:votes` is the number of votes the link has, and `voted-p` is a boolean specifying whether or not the currently logged in user has upvoted it. We do this for every link returned by `get-all-links/internal`.  Let's define a function to do that. We have to pass `datastore` to it because it will call `datastore-upvoted-p`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -619,7 +621,7 @@ The simplest way I found to get them sorted is using common lisps `sort` functio
         :key #'(lambda (link) (getf link :votes))))
 ~~~~~~~~
 
-And finally:
+And finally we define our method:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -655,3 +657,5 @@ Here are some links for the curious:
  * [Postmodern](http://marijnhaverbeke.nl/postmodern/)
  * [Postmodern examples](https://sites.google.com/site/sabraonthehill/postmodern-examples)
  * [Using policy based design in RESTAS(in Russian)](http://archimag.lisper.ru/2012/12/21/%D0%98%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5_policy-based_design_%D0%B2_RESTAS)
+
+[^metaclass]: A metaobject protocol is a scary term which basically means that even classes are instances of a class. If you aren't familiar with object-oriented meta-programming, a metaclass controls the way other classes behave. In our case Postmodern provides us a metaclass that tells CLOS classes how to be saved into a database. [end of oversimplified footnote]
