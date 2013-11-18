@@ -185,7 +185,7 @@ Here is the complete interface we will define today, complete with all the metho
   (define-method post-link (url title user)
     "post a new link")
   
-  (define-method get-all-links ()
+  (define-method get-all-links (&optional user)
     "Get all of the links in the datastore")
   
   (define-method upvote-count (link-id)
@@ -534,11 +534,11 @@ We check to see if the user isn't registered if he isn't, we hash the password, 
 
 ### Handling links
 
-In order to handle links properly, let's write an `upvoted-p` predicate method:
+In order to handle links properly, let's write an `datastore-upvoted-p` predicate method:
 
 {:lang="common-lisp"}
 ~~~~~~~~
-(defmethod upvoted-p ((datastore pg-datastore) link-id user)
+(defmethod datastore-upvoted-p ((datastore pg-datastore) link-id user)
   (with-connection (connection-spec datastore)
     (query (:select :link-id :users.name :from 'votes 'users
                     :where (:and (:= 'users.id 'submitter-id)
@@ -593,10 +593,11 @@ Now, given a `link-id`, getting the upvote count is as easy as using the sql `CO
 
 {:lang="common-lisp"}
 ~~~~~~~~
-(defun upvote-count (link-id)
-  (query (:select (:count link-id) :from 'votes
-                  :where (:= link-id 'link-id))
-         :single))
+(defmethod datastore-upvote-count ((datastore pg-datastore) link-id)
+  (with-connection (connection-spec datastore)
+    (query (:select (:count link-id) :from 'votes
+                    :where (:= link-id 'link-id))
+           :single)))
 ~~~~~~~~
 
 We'll need to augment the link plist with two keys: `:votes` is the number of votes the link has, and `voted-p` is a boolean specifying whether or not the currently logged in user has upvoted it. We do this for every link returned by `get-all-links/internal`.  Let's define a function to do that. We have to pass `datastore` to it because it will call `datastore-upvoted-p`:
@@ -607,7 +608,7 @@ We'll need to augment the link plist with two keys: `:votes` is the number of vo
   (loop
      for link in links
      for id = (getf link :id)
-     collect (list* :votes (upvote-count id)
+     collect (list* :votes (datastore-upvote-count datastore id)
                     :voted-p (datastore-upvoted-p datastore id username)
                     link)))
 ~~~~~~~~
