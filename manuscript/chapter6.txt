@@ -28,9 +28,9 @@ Next, we'll need to add two new files to our project, `util.lisp` will contain s
   :license "Your license here"
   :depends-on (:RESTAS :SEXML :POSTMODERN :IRONCLAD :BABEL)
   :components ((:file "defmodule")
-	       (:file "pg-datastore")
-	       (:file "util")
-	       (:file "template")
+               (:file "pg-datastore")
+               (:file "util")
+               (:file "template")
                (:file "linkdemo")))
 ~~~~~~~
 
@@ -71,7 +71,7 @@ The first template is `html-frame`. The function takes a plist called `context` 
     (getf context :body))))
 ~~~~~~~~
 
-After the `h1` title we have a menu, composed of links, the first is a link to the home page, followed by a separator: `" | "`. Next, we check if the user is logged in, using the function `logged-on-p` which we will define in `util.lisp` in a minute. We display the rest of the menu depending on this predicate. If the user is logged in, we display a link to a submit page and a link to log out. If the user isn't logged in, we prompt to either log in, or register. Simple enough I hope.
+After the `h1` title we have a menu composed of links. The first is a link to the home page, followed by a separator: `" | "`. Next, we check if the user is logged in, using the function `logged-on-p` which we will define in `util.lisp` in a minute. We display the rest of the menu depending on this predicate. If the user is logged in, we display a link to a submit page and a link to log out. If the user isn't logged in, we prompt to either log in, or register. Simple enough I hope.
 
 The `logged-on-p` function is defined in `util.lisp`:
 
@@ -81,7 +81,7 @@ The `logged-on-p` function is defined in `util.lisp`:
   (hunchentoot:session-value :username))
 ~~~~~~~~
 
-Notice that it always returns the name of the user, if one is logged in, so we can use it in displaying the username in `html-frame` in the snippet: `(format nil "Logout ~A" (logged-on-p))`.
+Notice that it always returns the name of the user, if one is logged in, so we can use it in displaying the username in `html-frame`.
 
 The next template is the actual home page, it takes a list of links, which are plists. It then displays all the links on separate lines. On each line, is either an upvote link, or a `*` if the user isn't logged in, followed by a vote count, and the actual link. If the user has already upvoted a link, instead of an upvote link, a `*` is displayed:
 
@@ -94,7 +94,7 @@ The next template is the actual home page, it takes a list of links, which are p
        (<:div (if (logged-on-p)
                   (if (getf link :voted-p)
                       "*"
-                      (<:a :href (genurl 'upvote-link :id (getf link :id)) 
+                      (<:a :href (genurl 'upvote-link :id (getf link :id))
                            "upvote"))
                   "*")
               " "
@@ -122,7 +122,7 @@ The last three templates are just the login and registration forms, and the form
           "Password:" (<:br)
           (<:input :type "password" :name "password") (<:br)
           (<:input :type "submit" :value "Register")))
-	  
+
 (defun submit-form ()
   (<:form :action (genurl 'submit/post) :method "post"
           "Title:" (<:br)
@@ -142,10 +142,10 @@ Lets start with the home page:
 ~~~~~~~~
 (define-route home ("")
   (list :title "Linkdemo"
-	:body (home-page (get-all-links (logged-on-p)))))
+        :body (home-page (get-all-links (logged-on-p)))))
 ~~~~~~~~
 
-This is the first time we actually used the front part of our database layer. Restas has generated a convenient function called `get-all-links` that might look something like:
+This is the first time we actually used the front end of our database layer. Restas has generated a convenient function called `get-all-links` that might look something like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -155,7 +155,7 @@ This is the first time we actually used the front part of our database layer. Re
 
 Remember that this method returned all the links, in a form specific to the logged in user, so that is why we pass in the username too. If there is no user, `datastore-get-all-links` handles that for us nicely. This all makes the code of the route very pretty. 
 
-### Handling users 
+### Handling users
 
 The next five routes handle user registration, logging in, and logging out. First, logging in:
 
@@ -166,7 +166,7 @@ The next five routes handle user registration, logging in, and logging out. Firs
         :body (login-form)))
 ~~~~~~~~
 
-Now, lets handle this form:
+Now, lets handle the login form:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -225,13 +225,13 @@ it just calls the `log-out` function, again, defined in `util.lisp`:
 
 ### Handling links
 
-Submiting a link is just as easy as logging in, or registering:
+Submitting a link is just as easy as logging in, or registering:
 
 {:lang="common-lisp"}
 ~~~~~~~~
 (define-route submit ("submit")
   (list :title "Submit a link"
-	:body (submit-form)))
+        :body (submit-form)))
 
 (define-route submit/post ("submit" :method :post)
   (let ((link (post-link (hunchentoot:post-parameter "url")
@@ -285,4 +285,4 @@ Now our app is complete. Load it, and try it out at the repl:
      :datastore-init '(:connection-spec ("linkdemo" "linkdemouser" "mypass" "localhost")))
 ~~~~~~~~
 
-Try it out, play with it. We'll continue in the next chapter.  
+Try it out, play with it. We'll continue in the next chapter.
