@@ -2,13 +2,13 @@
 
 ## Introduction
 
-We have already implemented a mostly complete application, using PostgreSQL, now we'll implement the datastore backend using redis. because of the separation between interface and implementation that CLOS and restas policies provide us we won't have to touch any of the application code outside of adding redis as a dependency and actually implementing the policy to use it. 
+We have already implemented a mostly complete application using PostgreSQL, now we'll implement the datastore backend using redis. Because of the separation between interface and implementation that CLOS and restas policies provide us we won't have to touch any of the application code outside of adding redis as a dependency and actually implementing the policy to use it.
 
 Redis is a very simple key-value store, it has support for strings, sets, lists and hash tables, and uses a very simple protocol and api. It has no query language, and no way to define a schema, which both simplifies and complicates things. 
 
-I assume redis is installed and is running on the local machine. On debian-like systems, this is just an `apt-get` away. You can see if redis is running by starting the console client `redis-cli` and typeing `ping` in the prompt, it should respond with "PONG".
+I assume redis is installed and is running on the local machine. On debian-like systems, this is just an `apt-get install redis-server` away. You can see if redis is running by starting the console client `redis-cli` and typeing `ping` in the prompt, it should respond with "PONG".
 
-Next, let's add `cl-redis`, our lisp client library for redis to our list of dependencies in `linkdemo.asd`. Also, lets add a file named `redis-datastore.lisp` to the project.  This is how our system definition looks like:
+Next, let's add `cl-redis`, the lisp client library for redis to our list of dependencies in `linkdemo.asd`. Also, lets add a file named `redis-datastore.lisp` to the project.  This is how our system definition looks like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -35,23 +35,23 @@ In `defmodule.lisp` we must add a package definition for our implementation of t
   (:export #:redis-datastore))
 ~~~~~~~~
 
-Like `linkdemo.pg-datastore` this package uses `cl` package, the `redis` package which contains the redis api and the policy package, where the names of the methods we must implement reside. We export the symbol `redis-datastore`, which names the class we use to access the datastore.
+Like `linkdemo.pg-datastore` this package uses the `cl` package, the `redis` package which contains the redis api and the policy package, where the names of the methods we must implement reside. We export the symbol `redis-datastore`, which names the class we use to access the datastore.
 
 ## A note on redis 
 
-Redis commands are fairly simple, but some of them conflict with common lisp names, so they are all prefixed with `red-`, for instance getting the value of the key "foo" is done with `(red-get "foo")`. Connecting to the datastore is done with the `connect` function which takes `:host` and `:port` parameters or with the `with-connection` macro which takes the same parameters. Like with postmodern, we'll be using `with-connection`.
+Redis commands are fairly simple, but some of them conflict with Common Lisp names, so they are all prefixed with `red-`. For instance getting the value of the key "foo" is done with `(red-get "foo")`. Connecting to the datastore is done with the `connect` function which takes `:host` and `:port` parameters or with the `with-connection` macro which takes the same parameters. Like with postmodern, we'll be using `with-connection`.
 
 ## The "schema" or lack there of
 
-Because redis is schemales, we must decide on a way to structure our data in redis. After some research and experimentation this is what I came up with:
+Because redis is schemaless, we must decide on a way to structure our data in redis. After some research and experimentation this is what I came up with:
 
-A user record will be stored as a string, containing the printed representation of a plist. We'll use the common lisp read/print consistency feature to ensure that what we print into that string will be read back consistently as a lisp list. Essentially, we're serializing data into strings. Each such record will be kept under a key named `USER:{id}`, where id is an integer denoting the id of the record. Since keys are strings, we'll have to generate them with a function using string concatenation. We'll also need another record called `USER-IDS` which is an integer we'll increment every time we add a user, and use the value as a new id. 
+A user record will be stored as a string, containing the printed representation of a plist. We'll use the common lisp read/print consistency feature to ensure that what we print into that string will be read back consistently as a lisp list. Essentially, we're serializing data into strings. Each such record will be kept under a key named `USER:{id}`, where id is an integer denoting the id of the record. Since keys are strings, we'll have to generate them with a function using string concatenation. We'll also need another record called `USER-IDS` which is an integer we'll increment every time we add a user, and use the value as a new id.
 
 Because we'll also need to lookup users by their usernames, we'll add another key to the datastore, called `USERNAME:{username}`, where `username` is the username string. This key will hold the id we'll use to lookup the whole record for that user. This is a sort of reverse lookup if you will.
 
-Posts we'll store in a similar way, we'll have a `POSTS-IDS` key with the id count, and we'll have a `POST:{id}` key holding the serialized plist record for that post. 
+Posts we'll store in a similar way, we'll have a `POSTS-IDS` key with the id count, and we'll have a `POST:{id}` key holding the serialized plist record for that post.
 
-Upvotes are interesting because we can just use sets to store the set of user names that have upvoted a given post. We'll store these sets in keys named `UPVOTE:{post-id}`. 
+Upvotes are interesting because we can just use sets to store the set of user names that have upvoted a given post. We'll store these sets in keys named `UPVOTE:{post-id}`.
 
 So for example if we have one user, named `user`, the datastore will contain this information:
 
@@ -114,7 +114,7 @@ Next are a couple of convenience functions we'll need, first are the familiar ha
              password-hash)))
 ~~~~~~~~
 
-In order to store lisp lists in redis, we need to print and read them consistently. Fortunately for us, lisp is is tself a kind of serialization format. Lisp objects like symbols, keywords, strings, lists and numbers can be printed to a string, and then read back as lisp objects. Here are two functions that will do that for us:
+In order to store lisp lists in redis, we need to print and read them consistently. Fortunately for us, lisp is itself a kind of serialization format. Lisp objects like symbols, keywords, strings, lists and numbers can be printed to a string, and then read back as lisp objects. Here are two functions that will do that for us:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -137,7 +137,7 @@ And finally, we need a way to generate keys like "USER:1" and "USER:2" and so on
 
 ### Handling users
 
-In order to get a user record we must first get the user id with the "USERNAME:{username}` key, and then look up the record in the "USER:{id}" key, and then deserialize it using `deserialize-list`:
+In order to get a user record by username, first we lookup the user id, We do this simply with a `red-get` command and a key in the form of `"USERNAME:{username}"`, generated with `make-key`. Next we use the id to retrieve the user record and convert it to a list with `deserialize-list`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -162,7 +162,7 @@ Authenticating the user is done with almost identical code to the postmodern exa
       username)))
 ~~~~~~~~
 
-Registering the user on the other hand is a bit more involved. First we must create a new id by using the `red-incr` command, which increments the value of a key. Then, we must use this id to generate a new "USERS:{id}" key, and set it to the serialized plist containing the user information. We must then add the id as a value to the "USERNAME:{username}" key. And finally, we return the username. Not to forget also hashing the password, and checking if such a user already exists:
+Registering the user on the other hand is a bit more involved. First we must create a new id by using the `red-incr` command, which increments the value of the `USER-IDS` key. Then, we must use this id to generate a new "USERS:{id}" key, and set it to the serialized plist containing the user information. We must then add the id as a value to the "USERNAME:{username}" key. And finally, we return the username. Not to forget also hashing the password, and checking if such a user already exists:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -183,7 +183,7 @@ Registering the user on the other hand is a bit more involved. First we must cre
 
 ## Handling upvotes
 
-Checking if a user has upvoted a link is as easy as checking to see if that user is in the set of upvoters for that link. Sets in redis are accessed with the `red-sismember` command, which takes a key and a value and checks to see if that value is in the set denoted by the key:
+Checking if a user has upvoted a link is as easy as checking to see if that user is in the set of upvoters for that link. Sets in redis are accessed with the `red-sismember` command(which I assume stands for "set is member"). It simply takes a key and a value and checks to see if that value is in the set denoted by the key:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -225,7 +225,7 @@ Posting a link involves first getting the user id of the submitter, generating a
       (datastore-upvote datastore (getf link :id) user))))
 ~~~~~~~~
 
-Extracting all the links is a bit interesting. Somehow we bust get a list of all links that start with "POST:" and then extract them all. We're in luck, since redis has a command `red-keys` that returns a list of keys matching a pattern, we simply pass it "POST:*" and we'll get them all. Then we "get" the keys and deserialize their values:
+Extracting all the links is a bit interesting. Somehow we bust get a list of all keys that start with "POST:" and then extract them all. We're in luck, since redis has a command `red-keys` that returns a list of keys matching a pattern, we simply pass it "POST:*" and we'll get them all. Then we "get" the keys and deserialize their values:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -239,11 +239,13 @@ Getting the upvote count is as easy as counting the elements of a set, and fortu
 
 {:lang="common-lisp"}
 ~~~~~~~~
-(defun upvote-count (link-id)
-  (red-scard (make-key :upvote link-id)))
+(defmethod datastore-upvote-count ((datastore redis-datastore) link-id)
+  (with-connection (:host (host datastore)
+                    :port (port datastore))
+    (red-scard (make-key :upvote link-id))))
 ~~~~~~~~
 
-The functions `add-vote-count` and `sort-links` are completely the same, and `datastore-get-all-links` is almost the same:
+The functions `add-vote-count`, `sort-links` and `datastore-get-all-links` are almost the same:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -251,7 +253,7 @@ The functions `add-vote-count` and `sort-links` are completely the same, and `da
   (loop
      for link in links
      for id = (getf link :id)
-     collect (list* :votes (upvote-count id)
+     collect (list* :votes (datastore-upvote-count datastore id)
                     :voted-p (datastore-upvoted-p datastore id username)
                     link)))
 
@@ -278,7 +280,7 @@ And we're done. Save the file, reload the code and now we can start our redis ba
     :datastore 'linkdemo.redis-datastore:redis-datastore)
 ~~~~~~~~
 
-And in fact, if we swap out the value of `*datastore*` with an instance of `redis-datastore` or `pg-datastore` we can switch the backend database while the app is running. This is pretty cool IMHO. 
+And in fact, if we swap out the value of `*datastore*` with an instance of `redis-datastore` or `pg-datastore` we can switch the backend database while the app is running. This is pretty cool IMHO.
 
 Further reading:
 
@@ -286,4 +288,3 @@ Further reading:
 * [List of Redis commands](http://www.redis.io/commands)
 * [The Beauty of Simplicity: Mastering Database Design Using Redis by Ryan Briones(video)](http://vimeo.com/26385026)
 * [The Beauty of Simplicity: Mastering Database Design Using Redis by Ryan Briones(slides)](http://www.slideshare.net/ryanbriones/the-beauty-of-simplicity-mastering-database-design-with-redis)
-
