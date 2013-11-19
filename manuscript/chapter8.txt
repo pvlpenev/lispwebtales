@@ -4,7 +4,7 @@
 
 With the way we've been using Restas so far, you probably think of modules defined with `restas:define-module` as simply a way to package routes together, but they are much more than that. A module is a tool for building reusable and composable components of a web app. A module can act both as a stand alone web app, or a component of a larger site. A module can even be used more than once in the same app, for different, but similar purposes. In the following chapters, we'll see what modules have to offer, and how to use them. I'll start by showing you how to use one that already exists in your web app.
 
-`restas-directory-publisher` is a module designed to handle serving of static files and directories. It can be used to serve a static website, or just handle your "static/" directory containing css and javascript files. Although static files should usually be served by your frontend server like nginx, for testing during development, and for low-traffic sites, `restas-directory-publisher` gets the job done. 
+`restas-directory-publisher` is a module designed to handle serving of static files and directories. It can be used to serve a static website, or just handle your "static/" directory containing css and javascript files. Although static files should usually be served by your frontend server like nginx, for testing during development, and for low-traffic sites `restas-directory-publisher` gets the job done. 
 
 ## Handling static files in restas
 
@@ -20,7 +20,7 @@ This works, but if we have many static files, we have to define routes for every
 
 ## Mounting modules
 
-In order to explain what it means for a module to be mounted, let me make a loose analogy with object oriented programming. In classic oop, you have a class that defines the properties and methods of a class, it serves as a template for the actual object. In order to get one such object, you must "instantiate" your class. Modules work in a similar way, before you mount it, a module is just a regular common lisp package. After you mount it, they become "alive" so to speak, as a running app. The function `restas:start` takes a module name, and mounts it at the top level, but a module can also have submodules mounted in it, forming a sort of hierarchy. 
+In order to explain what it means for a module to be mounted, let me make a loose analogy with object oriented programming. In classic OOP you have a class that defines the properties and methods of a class. It serves as a template for the actual object. In order to get one such object, you must "instantiate" your class. Modules work in a similar way, before you mount it, a module is just a regular common lisp package. After you mount it, they become "alive" so to speak, as a running app. The function `restas:start` takes a module name, and mounts it at the top level, but a module can also have submodules mounted in it, forming a sort of hierarchy. 
 
 For example you can have a main module, and this module has several submodules, for instance a blog module, a login module to handle user authentication, and an admin module for updating the blog. Each of these modules might have submodules of their own. The main module will be mounted using `restas:start`, as we've seen already, but the submodules will be mounted with `restas:mount-module`. 
 
@@ -42,7 +42,7 @@ For example you can have a main module, and this module has several submodules, 
 (start '#:blogapp.main :port 8080)
 ~~~~~~~~
 
-Pretty much the only thing I need to explain here is the `:url` option. It specifies the url where the module must be mounted. Take the `#:blogapp.blog` module as an example, lets say it has a route with the following template `"post/:id"`, if we mount it under the "blog" url, as we've done, the template will now be transformed to `"blog/post/:id"`, and the route will match that url. If we leave out the `:url` option, the routes in the submodule will be treated as if they were top level.  
+Pretty much the only thing I need to explain here is the `:url` option. It specifies the url where the module must be mounted. Take the `#:blogapp.blog` module as an example, lets say it has a route with the following template `"post/:id"`, if we mount it under the `"blog"` url, as we've done, the template will now be transformed to `"blog/post/:id"`, and the route will match that url. If we leave out the `:url` option, the routes in the submodule will be treated as if they were top level.
 	
 ## Adding a stylesheet to linkdemo
 
@@ -115,13 +115,13 @@ Other than the `:url` declaration, we have a variable binding. The variable `res
 
 ## Contexts 
 
-A set of such variables, like `restas.directory-publisher:*directory*` exported from a module, and later bound when mounting a module are called a context. One way to explain what a module context is, is to expand on the OO metaphor. When me "instantiate" with `mount-module` a module we set the current "instance" variables. If we were to mount the same module more than once(let's say we have more than one static directory we want to serve) we would give the two mounts different values. Although there is just one variable(in the lisp sense) called `restas.directory-publisher:*directory*`, at request time Restas will bind it to the right context value depending on which mounted module is handling the request.
+A set of such variables, like `restas.directory-publisher:*directory*` exported from a module, and later bound when mounting a module are called a context. One way to explain what a module context is, is to expand on the OO metaphor. When me "instantiate" a module with `mount-module`, we set the current "instance" variables. If we were to mount the same module more than once(let's say we have more than one static directory we want to serve) we would give the two mounts different values. Although there is just one variable(in the lisp sense) called `restas.directory-publisher:*directory*`, at request time Restas will bind it to the right context value depending on which mounted module is handling the request.
 
 In other words, a context is just a set of `(defvar *foo* ...)` inside a module, that are being rebound depending on which mounted module the route that handles the request belongs to. I hope I haven't confused you. This mechanism gives us a lot of power to reuse and configure modules.
 
 ## Conclusion
 
-The Restas module mechanism is very powerful. Without them, restas can be considered only slightly more powerful than any other micro framework you might have seen. This makes it a powerful and useful tool for web development. If I am permitted a very short rant, this, as well as the policy mechanism are both examples of the power of dynamic variables in Lisp. Even though an FP proponent will denounce them because they break referential transparency, they are a really powerful tool, and I miss them every time I have to use a language that doesn't have them. Even something as simple as binding a `*request*` variable to the current request object in hunchentoot is a great plus. 
+The Restas module mechanism is very powerful. Without them, restas can be considered only slightly more powerful than any other micro framework you might have seen. This makes it a powerful and useful tool for web development. If I am permitted a very short rant, this as well as the policy mechanism are both examples of the power of dynamic variables in Lisp. Even though an FP proponent will denounce them because they break referential transparency, they are a really powerful tool, and I miss them every time I have to use a language that doesn't have them. Even something as simple as binding a `*request*` variable to the current request object in hunchentoot is a great plus. 
 
 In the next chapters we'll examine modules in a bit more depth with a few examples. In the mean time, happy hacking!
 
