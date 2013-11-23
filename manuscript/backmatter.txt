@@ -14,16 +14,16 @@ Most Linux distributions have both CCL and SBCL in their package repositories, f
 $ sudo apt-get install sbcl
 ~~~~~~~~
 
-But I recommend you download and install binaries manually, distributions sometimes patch CL implementations in order to "fix" something. Also who knows how ancient the version in the package manager is. It is usually recommended to work with the latest releases of CL implementations. 
+But I recommend you download and install binaries manually, distributions sometimes patch CL implementations in order to "fix" something. Also who knows how ancient the version in the package manager is. It is usually recommended to work with the latest releases of CL implementations.
 
 #### SBCL
 
-You can download SBCL at http://www.sbcl.org/platform-table.html 
+You can download SBCL at http://www.sbcl.org/platform-table.html
 
 Once you've done so, uncompress the archive. The example is shown for x86-64 on Linux:
 
 ~~~~~~~~
-$ tar -jxvf sbcl-1.1.5-x86-64-linux-binary.tar.bz2 
+$ tar -jxvf sbcl-1.1.5-x86-64-linux-binary.tar.bz2
 ~~~~~~~~
 
 Go to the directory:
@@ -35,20 +35,20 @@ $ cd sbcl-1.1.5-x86-64-linux/
 The file `INSTALL` has information about how to configure the installation, but the default should suit your needs just fine, type:
 
 ~~~~~~~~
-$ sh install.sh 
+$ sh install.sh
 ~~~~~~~~
 
-type `sbcl` into the command line to see if it works OK. you should get a prompt starting with an `*`. I have the habit of typeing `(+ 1 2)` in order to see if it really works, and I have never gotten an answer different than 3 so far, that's reliable software :)   
+type `sbcl` into the command line to see if it works OK. you should get a prompt starting with an `*`. I have the habit of typeing `(+ 1 2)` in order to see if it really works, and I have never gotten an answer different than 3 so far, that's reliable software :)
 
 
 #### CCL
 
-You can get CCL from http://ccl.clozure.com/download.html The distribution contains both the 64 and 32 bit binaries. [Chapter 2](http://ccl.clozure.com/manual/chapter2.html) of the CCL manual contains information on how to obtain and install CCL if you need it. 
+You can get CCL from http://ccl.clozure.com/download.html The distribution contains both the 64 and 32 bit binaries. [Chapter 2](http://ccl.clozure.com/manual/chapter2.html) of the CCL manual contains information on how to obtain and install CCL if you need it.
 
 After you download CCL, uncompressed the archive with the following command:
 
 ~~~~~~~~
-$ tar -xzvf ccl-1.8-linuxx86.tar.gz 
+$ tar -xzvf ccl-1.8-linuxx86.tar.gz
 ~~~~~~~~
 
 CCL is started by a shell script in the `ccl/scripts` directory, named `ccl` or `ccl64` for the 32 and 64 bit versions respectively. The way you install CCL is by copying one(or both) of these scripts to a directory on your path, and editing them to point to the CCL directory you just uncompressed. so for example if my `ccl` directory is in my home directory, named `/home/pav` on Linux:
@@ -71,7 +71,7 @@ I then ensure the file is executable:
 $ sudo chmod +x /usr/local/bin/ccl
 ~~~~~~~
 
-type `ccl` at the command line. The prompt should be `?`. Type some expression like `(+ 1 2)` to see if it works. 
+type `ccl` at the command line. The prompt should be `?`. Type some expression like `(+ 1 2)` to see if it works.
 
 ### Installing Quicklisp
 
@@ -108,12 +108,11 @@ And you're done. You can now quickload libraries, for instance the following com
 (ql:quickload "restas")
 ~~~~~~~~
 
-
 ### Recommended editors
 
 * Emacs and Slime: The best option if you already know it, or you are willing to learn it. 
 * Vim and Slimv: The next best thing. Vim isn't actually easier to learn than Emacs, but if you already know it, it can get the job done.
-* All the other options pretty much stink, but Kate at least has a built in terminal, so it's a bit easier to work with lisp interactively. 
+* All the other options pretty much stink, but Kate at least has a built in terminal, so it's a bit easier to work with lisp interactively.
 
 ## Windows
 
@@ -121,7 +120,7 @@ And you're done. You can now quickload libraries, for instance the following com
 
 The implementation I recommend on Windows is CCL, you can download it from [here](http://ccl.clozure.com/download.html).
 
-After you've downloaded the file, uncompress  it in the directory `C:\ccl`. 
+After you've downloaded the file, uncompress  it in the directory `C:\ccl`.
 
 The `ccl` folder will have two executables, one named `wx86cl` for 32 bit systems, and `wx86cl64` for 64 bin systems.
 
@@ -133,7 +132,7 @@ At the command prompt, we can start the application by typing:
 
 Let's make it possible to start ccl simply by typing `ccl`. I'll demonstrate for the 32 bit version, it is equivalent for the 64 bit.
 
-First, rename the `wx86cl` and `wx86cl.image` files to `ccl` and `ccl.image` respectively. Now, we need to set up the PATH enviromental variable so that windows knows where to find CCL. 
+First, rename the `wx86cl` and `wx86cl.image` files to `ccl` and `ccl.image` respectively. Now, we need to set up the PATH enviromental variable so that windows knows where to find CCL.
 
 For Windows 7, click the Start menu, and right click on `Computer` and select `properties`. From the sidebar select `Advanced system settings`. At the bottom of the window, click on the `Environment Variables` button. In the second pane, called `System variables`, search for the `Path` variable, select it, click on `Edit`. At The end of the `Variable value` field, append the following: `;C\ccl\`. Click OK. Open a command prompt, and type ccl, it should greet you with a message. That's it, you have CCL installed.
 
@@ -183,10 +182,9 @@ Restart CCL, to test if it worked:
 
 If it started downloading and installing Restas, you're done. You can now quickload libraries.
 
-
 ### Recommended editors
 
-* Emacs and Slime: The best option if you already know it, or you are willing to learn it. 
+* Emacs and Slime: The best option if you already know it, or you are willing to learn it.
 * Lisp Cabinet: A bundle of Emacs and various lisp implementations, an easy way to install Lisp and Emacs, with various customizations.
 * Vim and Slimv: The next best thing. Vim isn't actually easier to learn than Emacs, but if you already know it, it can get the job done.
 * Sublime Text2: Seems to be acceptable for editing lisp code.
@@ -205,7 +203,7 @@ For experienced hackers new to lisp, [Practical Common Lisp](http://www.gigamonk
 
 ## Cliki: The Common Lisp wiki
 
-Almost all information you would want about Common Lisp can be found on [Cliki](http://cliki.net). 
+Almost all information you would want about Common Lisp can be found on [Cliki](http://cliki.net).
 
 Cliki pages of note:
 [Getting started](http://www.cliki.net/Getting%20Started)
@@ -216,6 +214,6 @@ Cliki pages of note:
 
 ## IRC
 
-I(and many lispers) hang out on irc on the [Freenode](http://freenode.net/) server. Channels I frequent include `#lispweb` and `#lisp`. You can also find help on `#clnoobs`. 
+I(and many lispers) hang out on irc on the [Freenode](http://freenode.net/) server. Channels I frequent include `#lispweb` and `#lisp`. You can also find help on `#clnoobs`.
 
 Check out a bunch of other lisp-related channels on [cliki](http://www.cliki.net/IRC).
