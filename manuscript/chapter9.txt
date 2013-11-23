@@ -8,7 +8,7 @@ In this chapter we'll refactor the user handling code from `linkdemo` out into i
 
  * The linkdemo application will need a way to ask the auth module if a user is logged in.
 
- * The linkdemo application will also need a way to generate links to the login, logout and registration routes.
+ * The linkdemo application will also need a way to generate links to the login, logout and registration routes. I'll explain later how Restas solves this problem for us.
 
  * The auth module will also need to know where to redirect the user once a successful operation has occurred. For example the user gets redirected to the home page after a successful login.
 
@@ -37,7 +37,7 @@ Now, let's define the endpoints where the module will be configured. This basica
 (defvar *redirect-route* nil)
 ~~~~~~~~
 
-In order to keep things simple, when a user logs in, out or registers, we'll redirect to the same place, specified by `*redirect-route*`. We could have had separate variables for all 3 operations.
+In order to keep things simple, when a user logs in, out or registers, we'll redirect to the same place, specified by `*redirect-route*`. We could have had separate variables for all 3 operations if we wanted.
 
 ## The templates
 
@@ -80,7 +80,7 @@ Next, we add the `sexml` initialization code to`defmodule.asd` as well as adding
    :<))
 ~~~~~~~~
 
-Now we need to actually port the template files to `template.lisp`. The only code we need is `login-form` and `register-form`, the code is exactly the same:
+Now we need to actually port the templates to `template.lisp`. The only functions we need are `login-form` and `register-form`, the code is exactly the same:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -126,7 +126,7 @@ In order to implement the routes, first we need to port the util functions from 
 
 The only thing changed here is the default value of the `redirect-route` parameter of `log-in` and `log-out` is the `*redirect-route*` variable.
 
-And finally, let's get to the routes:
+And finally, let's port the routes to `authdemo.lisp` routes:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -158,7 +158,7 @@ And finally, let's get to the routes:
   (log-out))
 ~~~~~~~~
 
-The difference here is that in `login/post` and `register/post`, instead of calling `auth-user` and `register-user` directly, we use `funcall` to call the functions we've configured the module to use with the dynamic variables `*authenticate-user-function*` and `*register-user-function*`.
+The difference here is that in `login/post` and `register/post`, instead of calling `auth-user` and `register-user` directly, we use `funcall` to call the functions we've configured the module to use with the variables `*authenticate-user-function*` and `*register-user-function*`.
 
 And finally, we must export `logged-on-p` since the applications using our module will need it:
 
@@ -230,7 +230,7 @@ Before we continue I need to expand a bit on what happens when a module gets mou
   ...)
 ~~~~~~~~
 
-Restas will automatically generate symbols for every route in `foobar` in the current package. In our case these symbols would be `-foobar-.foo` and `-foobar-.bar`. We can now use these symbols with `genurl` or `redirect` from a different module. Now modules can interact without knowing much about each other. We'll use this to tell `authdemo` where to redirect to, since we don't want to hard code url's. Note that sub-modules can still use their parents routes, which is why we can pass just `home` as a redirect route to `authdemo`. We'll need this functionality in the next section.
+Restas will automatically generate symbols for every route in `foobar` in the current package. In our case these symbols would be `-foobar-.foo` and `-foobar-.bar`. We can now use these symbols with `genurl` or `redirect` from a different module. Now modules can interact without knowing much about each other. We'll use this to "link" `linkdemo` and `authdemo`. Note that sub-modules can still use their parents routes, which is why we can pass just `home` as a redirect route to `authdemo`.  But we'll need these auto-generated route symbols in the next section.
 
 ### Fixing the templates
 
