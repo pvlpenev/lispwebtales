@@ -1,15 +1,285 @@
 # Modules as reusable components part II: Implementing a reusable module
 
-## Introduction 
+## Introduction
 
-In this chapter we'll refactor the user handling code from `linkdemo` out into it's own project, which we can then reuse in other apps as well. 
+In this chapter we'll refactor the user handling code from `linkdemo` out into it's own project, which we can then reuse in other apps as well. First, let's state explicitly how will the authentication module interact with the rest of the system:
 
-First, let's create the project:
+ * I want the module to know as little as possible about how users are actually represented. What this means is that the module will be passed references to functions that will handle user creation and authentication. Essentially these will be context variables set on module initialization. What we get from this is that we won't have to worry about implementing a policy or even knowing that one exists. We just call functions that the user of the module gave us.
+
+ * The linkdemo application will need a way to ask the auth module if a user is logged in.
+
+ * The linkdemo application will also need a way to generate links to the login, logout and registration routes.
+
+ * The auth module will also need to know where to redirect the user once a successful operation has occurred. For example the user gets redirected to the home page after a successful login.
+
+Lets start by creating a project:
 
 {:lang="common-lisp"}
 ~~~~~~~~
- * (ql:quickload "restas-project")
- * (restas-project:START-RESTAS-PROJECT "authdemo" :depends-on '(:sexml :cl-redis :ironclad :babel))
+* (ql:quickload "restas-project")
+* (restas-project:start-restas-project "authdemo" :depends-on '(:sexml))
 ~~~~~~~~
 
-For simplicity, I'll only implement a redis policy backend, you can add the PostgreSQL backend if you wish.  
+## The interface
+
+Now, let's define the endpoints where the module will be configured. This basically consists of a couple of `defvar`s at the top of `authdemo.lisp`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+;;;; authdemo.lisp
+
+(in-package #:authdemo)
+
+;;; "authdemo" goes here. Hacks and glory await!
+
+(defvar *authenticate-user-function* nil)
+(defvar *register-user-function* nil)
+(defvar *redirect-route* nil)
+~~~~~~~~
+
+In order to keep things simple, when a user logs in, out or registers, we'll redirect to the same place, specified by `*redirect-route*`. We could have had separate variables for all 3 operations.
+
+## The templates
+
+Now let's port the templates from linkdemo. First, let's add the `template.lisp` file to the `authdemo.asd` file:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(asdf:defsystem #:authdemo
+  :serial t
+  :description "Your description here"
+  :author "Your name here"
+  :license "Your license here"
+  :depends-on (:RESTAS :SEXML)
+  :components ((:file "defmodule")
+               (:file "template")
+               (:file "authdemo")))
+~~~~~~~~
+
+Next, we add the `sexml` initialization code to`defmodule.asd` as well as adding `#:restas` to the `:use` list of the `#:authdemo` package:
+
+{:lang="common-lisp"}
+~~~~~~~~
+;;;; defmodule.lisp
+
+(restas:define-module #:authdemo
+  (:use #:cl #:restas))
+
+(in-package #:authdemo)
+
+(defparameter *template-directory*
+  (merge-pathnames #P"templates/" authdemo-config:*base-directory*))
+
+(defparameter *static-directory*
+  (merge-pathnames #P"static/" authdemo-config:*base-directory*))
+
+(sexml:with-compiletime-active-layers
+    (sexml:standard-sexml sexml:xml-doctype)
+  (sexml:support-dtd
+   (merge-pathnames "html5.dtd" (asdf:system-source-directory "sexml"))
+   :<))
+~~~~~~~~
+
+Now we need to actually port the template files to `template.lisp`. The only code we need is `login-form` and `register-form`, the code is exactly the same:
+
+{:lang="common-lisp"}
+~~~~~~~~
+;;;; template.lisp
+
+(in-package #:authdemo)
+
+(defun login-form ()
+  (<:form :action (genurl 'login/post) :method "post"
+          "User name:" (<:br)
+          (<:input :type "text" :name "username")(<:br)
+          "Password:" (<:br)
+          (<:input :type "password" :name "password") (<:br)
+          (<:input :type "submit" :value "Log in")))
+
+(defun register-form ()
+  (<:form :action (genurl 'register/post) :method "post"
+          "User name:" (<:br)
+          (<:input :type "text" :name "username")(<:br)
+          "Password:" (<:br)
+          (<:input :type "password" :name "password") (<:br)
+          (<:input :type "submit" :value "Register")))
+~~~~~~~~
+
+## The routes
+
+In order to implement the routes, first we need to port the util functions from `linkdemo`s `util.lisp` file. I'll keep them in `authdemo.lisp` for simplicity:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun logged-on-p ()
+  (hunchentoot:session-value :username))
+
+(defun log-in (username &optional (redirect-route *redirect-route*))
+  (hunchentoot:start-session)
+  (setf (hunchentoot:session-value :username) username)
+  (redirect redirect-route))
+
+(defun log-out (&optional (redirect-route *redirect-route*))
+  (setf (hunchentoot:session-value :username) nil)
+  (redirect redirect-route))
+~~~~~~~~
+
+The only thing changed here is the default value of the `redirect-route` parameter of `log-in` and `log-out` is the `*redirect-route*` variable.
+
+And finally, let's get to the routes:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(define-route login ("login")
+  (list :title "Log in"
+        :body (login-form)))
+
+(define-route login/post ("login" :method :post)
+  (let ((user (funcall *authenticate-user-function*
+                       (hunchentoot:post-parameter "username")
+                       (hunchentoot:post-parameter "password"))))
+    (if user
+        (log-in user)
+        (redirect 'login))))
+
+(define-route register ("register")
+  (list :title "register"
+        :body (register-form)))
+
+(define-route register/post ("register" :method :post)
+  (let ((user (funcall *register-user-function*
+                       (hunchentoot:post-parameter "username")
+                       (hunchentoot:post-parameter "password"))))
+    (if user
+        (log-in user)
+        (redirect 'register))))
+
+(define-route logout ("logout")
+  (log-out))
+~~~~~~~~
+
+The difference here is that in `login/post` and `register/post`, instead of calling `auth-user` and `register-user` directly, we use `funcall` to call the functions we've configured the module to use with the dynamic variables `*authenticate-user-function*` and `*register-user-function*`.
+
+And finally, we must export `logged-on-p` since the applications using our module will need it:
+
+{:lang="common-lisp"}
+~~~~~~~~
+;;;; defmodule.lisp
+
+(restas:define-module #:authdemo
+  (:use #:cl #:restas)
+  (:export #:logged-on-p))
+~~~~~~~~
+
+And that's it! The module is now a complete reusable component! In order to use it though, we'll need to clear all of the things we ported to `authdemo` from `linkdemo`. Do that as an exercise and we'll move on to integrating them together.
+
+## Using authdemo in an application
+
+### getting linkdemo ready
+
+Now we're ready to actually add `authdemo` to our link sharing application. First we need to add it to the dependencies in `linkdemo.asd`:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(asdf:defsystem #:linkdemo
+  :serial t
+  :description "Your description here"
+  :author "Your name here"
+  :license "Your license here"
+  :depends-on (:RESTAS :SEXML :POSTMODERN :IRONCLAD
+               :BABEL :cl-redis :restas-directory-publisher :authdemo)
+  :components ((:file "defmodule")
+               (:file "pg-datastore")
+               (:file "redis-datastore")
+               (:file "util")
+               (:file "template")
+               (:file "linkdemo")))
+~~~~~~~~
+
+Next, we need to add `#:authdemo` to the `:use` list in the `linkdemo` package declaration so we can have access to the `logged-on-p` function:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(restas:define-module #:linkdemo
+  (:use #:cl #:restas #:linkdemo.datastore #:authdemo)
+  (:export #:start-linkdemo))
+~~~~~~~~
+
+### Mounting everything
+
+Next, let's mount `authdemo` in our application. At the bottom of `defmodule.lisp` add the following code:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(mount-module -authdemo- (#:authdemo)
+  (:render-method 'html-frame)
+  (authdemo:*authenticate-user-function* #'auth-user)
+  (authdemo:*register-user-function* #'register-user)
+  (authdemo:*redirect-route* 'home))
+~~~~~~~~
+
+We give our mount the name `-authdemo-`, and we specify a render method, in our case `html-frame`. Next, we bind the context variables in `authdemo`. We specify that the `home` route is to be used as the redirect route.
+
+### On routes in mounted modules
+
+Before we continue I need to expand a bit on what happens when a module gets mounted. Consider the following example, we have a module named `foobar` with two routes in it, `foo` and `bar`. If we mount this module like so:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(mount-module -foobar- (#:foobar)
+  ...)
+~~~~~~~~
+
+Restas will automatically generate symbols for every route in `foobar` in the current package. In our case these symbols would be `-foobar-.foo` and `-foobar-.bar`. We can now use these symbols with `genurl` or `redirect` from a different module. Now modules can interact without knowing much about each other. We'll use this to tell `authdemo` where to redirect to, since we don't want to hard code url's. Note that sub-modules can still use their parents routes, which is why we can pass just `home` as a redirect route to `authdemo`. We'll need this functionality in the next section.
+
+### Fixing the templates
+
+Because the `login`, `register` and `logout` routes are no longer available in the `linkdemo` application, we need to fix the template code that use them to generate links. Fortunately, only `html-frame` uses them, so fixing the template is easy, here is the fixed code:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(defun html-frame (context)
+  (<:html
+   (<:head (<:title (getf context :title))
+           ;; Stylesheet
+           (<:link :rel "stylesheet" :type "text/css" :href "/static/css/style.css"))
+   (<:body
+    (<:div
+     (<:h1 (getf context :title))
+     (<:a :href (genurl 'home) "Home") " | "
+     (if (logged-on-p)
+         (list (<:a :href (genurl 'submit) "Submit a link")
+               " | "
+               (<:a :href (genurl '-authdemo-.logout)
+                    (format nil "Logout ~A"
+                            (logged-on-p))))
+         (list (<:a :href (genurl '-authdemo-.login) "Log in")
+               " or "
+               (<:a :href (genurl '-authdemo-.register) "Register")))
+     (<:hr))
+    (getf context :body))))
+~~~~~~~~
+
+Notice that instead of `login`, we use `-authdemo-.login` as the route name, same for `register` and `logout`.
+
+### Running it
+
+We can now run `linkdemo` like we did before:
+
+{:lang="common-lisp"}
+~~~~~~~~
+ * (linkdemo:start-linkdemo
+    :datastore 'linkdemo.redis-datastore:redis-datastore)
+~~~~~~~~
+
+or if you prefer the PostgreSQL version:
+
+{:lang="common-lisp"}
+~~~~~~~~
+(linkdemo:start-linkdemo
+     :datastore-init '(:connection-spec ("linkdemo" "linkdemouser" "mypass" "localhost")))
+~~~~~~~~
+
+## Conclusion
+
+And that's it! I've covered most of Restas by this point, as well as a bunch of other stuff like Postmodern and how to use Redis with lisp, html templating, etc. Now you know enough to write your own applications. Good luck, and have fun!
