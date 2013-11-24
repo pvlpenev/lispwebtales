@@ -41,7 +41,7 @@ Or loaded from the lisp prompt:
  * (load "hello-world.lisp")
 ~~~~~~~~
 
-Now you can open the page [http//localhost:8080/](http//localhost:8080/) and see the result.
+Now you can open the page [http://localhost:8080/](http://localhost:8080/) and see the result.
 
 ### Detailed explanation
 
