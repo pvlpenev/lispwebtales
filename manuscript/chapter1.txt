@@ -376,7 +376,7 @@ Before we look at how we generate the blog posts themselves, let me explain how 
 {:lang="common-lisp"}
 ~~~~~~~~
 '(:author "Author Name"
-  :author "author-name" ; this is a slug string
+  :author-id "author-name" ; this is a slug string
   :title "This is a title"
   :content "This is the body of the blog post")
 ~~~~~~~~
@@ -466,7 +466,7 @@ Simply displays the home page.
 
 The `post` route handles the case where we are viewing a single blog post. We see that the `post` route has an interesting template: `"post/:id"`. If you are familiar with something like Sinatra, you'll find this syntax familiar. Parts of a uri template beginning with a colon designate route variables, and can match any uri with that structure, as I mentioned in the previous section. For example `/post/0`, `/post/1` and `/post/2` will all match and be handled by this route. But so will `/post/foo`, our app breaks if we go to a url that doesn't have an integer url component. We'll see later how we can fix this, for now, we simply don't do that. The matched string also gets bound to a lisp variable in the body of the route, in our case `id`.
 
-Lets look at the body, each such route template variable is bound to the string that it matched, so we get values like `"0"`, or `"1"` or `"foo"`. Using common lisps `parse-integen` we convert it to an integer, and we look up the element in the list of posts with the `elt` function, which takes a list(or any lisp sequence) and gets the item at the index we suply as a second argument.
+Lets look at the body, each such route template variable is bound to the string that it matched, so we get values like `"0"`, or `"1"` or `"foo"`. Using common lisps `parse-integer` we convert it to an integer, and we look up the element in the list of posts with the `elt` function, which takes a list(or any lisp sequence) and gets the item at the index we suply as a second argument.
 
 We render the post by passing it as a list to `blogpage`, which returns a string, which in turn, Restas returns to the browser.
 
