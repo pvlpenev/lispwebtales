@@ -323,7 +323,7 @@ Lets implement the method used for initiating the datastore, creating the tables
 
 {:lang="common-lisp"}
 ~~~~~~~~
-(defmethod datastore-init ((datastore 'pg-datastore))
+(defmethod datastore-init ((datastore pg-datastore))
   (with-connection (connection-spec datastore)
     (unless (table-exists-p 'users)
       (execute (dao-table-definition 'users)))))
