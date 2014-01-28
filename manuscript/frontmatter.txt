@@ -28,7 +28,7 @@ The book is a set of tutorials and examples. It uses the Common Lisp language an
 * The Restas web framework
 * The SEXML library for outputting XML and HTML
 * Closure-template for HTML templating
-* Postmodern for PostgreSQL access, and cl-reddis as a simple datastore
+* Postmodern for PostgreSQL access, and cl-redis as a simple datastore
 * Various utilities
 
 ## Who is this for
