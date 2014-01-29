@@ -4,7 +4,7 @@ Single file apps are fine and dandy, but things will start getting ugly as we in
 
 ## Systems
 
-ASDF is a build system for Common Lisp. An ASDF system contains information on the files that are part of your app, and in what order are they to be compiled and loaded into the system. It also knows about the dependencies of your application. Lisp systems come with ASDF, and if you installed Quicklisp, you also have an easy way to download and load existing ASDF systems.
+ASDF is a build system for Common Lisp. An ASDF system contains information on the files that are part of your app, and in what order they are to be compiled and loaded into the system. It also knows about the dependencies of your application. Lisp systems come with ASDF, and if you installed Quicklisp, you also have an easy way to download and load existing ASDF systems.
 
 Defining an ASDF system is easy, the definition is contained in a small file in your project directory with an `.asd` extension. We'll see in a moment what such a file looks like. Code in the ASD file is lisp, so you shouldn't have problems reading and understanding it.
 
