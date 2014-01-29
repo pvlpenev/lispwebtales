@@ -45,7 +45,7 @@ After it finishes loading lets create our `hello-world` project:
  * (restas-project:start-restas-project "hello-world")
 ~~~~~~~~
 
-This will create a new directory called `hello-world` in `local-projects`. Lets see what we have in there:
+This will create a new directory called `hello-world` in `local-projects`. Let's see what we have in there:
 
 ~~~~~~~~
 .
@@ -94,7 +94,7 @@ The `:components` key tells ASDF what files are in our system. In this case only
 
 ### defmodule.lisp
 
-In the file `defmodule.lisp` we define our packages and modules included in our application. Normal Lisp projects call this file `packages.lisp` by convention, but we use the Restas convention of naming it `defmodule.lisp`. Lets look inside:
+In the file `defmodule.lisp` we define our packages and modules included in our application. Normal Lisp projects call this file `packages.lisp` by convention, but we use the Restas convention of naming it `defmodule.lisp`. Let's look inside:
 
 {:lang="common-lisp"}
 ~~~~~~~~
