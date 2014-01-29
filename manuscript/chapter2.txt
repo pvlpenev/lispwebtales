@@ -120,7 +120,7 @@ This is it for `defmodule.lisp`.
 
 ### hello-world.lisp
 
-This is the main file of our application. This is where all of our routes will be defined. Here is how this file should look like:
+This is the main file of our application. This is where all of our routes will be defined. Here is what this file should look like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
