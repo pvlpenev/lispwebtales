@@ -352,7 +352,7 @@ Lets take a look at the various template functions we'll be using:
 (html-frame "This is a title" "This is a body")
 ~~~~~~~~
 
-And get the following output as a lisp string(I've indented it, and broken it up to separate lines):
+And get the following output as a lisp string (I've indented it, and broken it up to separate lines):
 
 {:lang="html"}
 ~~~~~~~~
@@ -367,7 +367,7 @@ And get the following output as a lisp string(I've indented it, and broken it up
 </html>
 ~~~~~~~~
 
-Of note is the use of the restas function `genurl` which takes a route, and generates a url that would be handled by the route function. In this case `(genurl 'home)` will generate the `/` url, since that is what the `home` route(defined in the next section) handles. This is done because restas applications can me "mounted" on different points in a url path tree. if the whole application is mounted on the uri `/blog`, then the same code(without having to change it) would generate `/blog/` as the output.
+Of note is the use of the restas function `genurl` which takes a route, and generates a url that would be handled by the route function. In this case `(genurl 'home)` will generate the `/` url, since that is what the `home` route (defined in the next section) handles. This is done because restas applications can me "mounted" on different points in a url path tree. if the whole application is mounted on the uri `/blog`, then the same code (without having to change it) would generate `/blog/` as the output.
 
 
 
@@ -466,7 +466,7 @@ Simply displays the home page.
 
 The `post` route handles the case where we are viewing a single blog post. We see that the `post` route has an interesting template: `"post/:id"`. If you are familiar with something like Sinatra, you'll find this syntax familiar. Parts of a uri template beginning with a colon designate route variables, and can match any uri with that structure, as I mentioned in the previous section. For example `/post/0`, `/post/1` and `/post/2` will all match and be handled by this route. But so will `/post/foo`, our app breaks if we go to a url that doesn't have an integer url component. We'll see later how we can fix this, for now, we simply don't do that. The matched string also gets bound to a lisp variable in the body of the route, in our case `id`.
 
-Lets look at the body, each such route template variable is bound to the string that it matched, so we get values like `"0"`, or `"1"` or `"foo"`. Using common lisps `parse-integer` we convert it to an integer, and we look up the element in the list of posts with the `elt` function, which takes a list(or any lisp sequence) and gets the item at the index we suply as a second argument.
+Let's look at the body, each such route template variable is bound to the string that it matched, so we get values like `"0"`, or `"1"` or `"foo"`. Using common lisp's `parse-integer` we convert it to an integer, and we look up the element in the list of posts with the `elt` function, which takes a list (or any lisp sequence) and gets the item at the index we suply as a second argument.
 
 We render the post by passing it as a list to `blogpage`, which returns a string, which in turn, Restas returns to the browser.
 
@@ -497,7 +497,7 @@ If we have blog posts by an author named `"Pavel Penev"`, its slug would have be
 
 The `add` route handles displaying a form for the user to submit a blog post. Since we don't want just anybody to add posts, we want to add some user authentication, but since this is just a simple example, I won't bother with login forms, cookies and sessions, we'll leave that for a later chapter. For now I'll use simple HTTP authorization.
 
-If you are unfamiliar with HTTP authentication, it is a very crude way to log into a web site. The browser has to supply a username and a password as an HTTP header. The function `hunchentoot:authorization` returns them as two separate values, since common lisp supports multiple return values, instead of just one(as is the case in probably every other language you've ever used), we have to bind them using the macro `multiple-value-bind`, which is like `let` for multiple values. It binds the variables `username` and `password` and in the body we check if they are the expected values, in our case "user" and "pass". If they are, we render our form, and if not, we tell the browser to ask the user for a username and password using `hunchentoot:require-authorization'.  
+If you are unfamiliar with HTTP authentication, it is a very crude way to log into a web site. The browser has to supply a username and a password as an HTTP header. The function `hunchentoot:authorization` returns them as two separate values, since common lisp supports multiple return values, instead of just one (as is the case in probably every other language you've ever used), we have to bind them using the macro `multiple-value-bind`, which is like `let` for multiple values. It binds the variables `username` and `password` and in the body we check if they are the expected values, in our case "user" and "pass". If they are, we render our form, and if not, we tell the browser to ask the user for a username and password using `hunchentoot:require-authorization'.  
 
 {:lang="common-lisp"}
 ~~~~~~~~
