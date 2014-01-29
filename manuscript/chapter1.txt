@@ -270,7 +270,7 @@ This time our application is named `blogdemo`.
 (<:augment-with-doctype "html" "")
 ~~~~~~~~
 
-SEXML is a library for outputting XML using lisp s-expressions as input. It takes an xml dtd and generates a package with functions for all the necessary tags. In our case, we give it an html5 dtd, and specify the package named `<`. This means that we can write code like:
+SEXML is a library for outputting XML using lisp s-expressions as input. It takes an xml dtd and generates a package with functions for all the necessary tags. In our case, we give it an html5 dtd, and specify the package name `<`. This means that we can write code like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
