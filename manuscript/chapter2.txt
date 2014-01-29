@@ -10,7 +10,7 @@ Defining an ASDF system is easy, the definition is contained in a small file in 
 
 ## Quicklisp and manual installation
 
-We already saw how libraries can be downloaded, installed and loaded with Quicklisp, but what if a library isn't in Quicklisps repository? When you installed QL, it created a directory called `quicklisp` in your home directory. This is where Quicklisp installs all of the libraries it downloads. Inside it is another directory called `local-projects`. This directory contains locally installed libraries, that weren't downloaded with Quicklisp. Every ASDF system in `local-projects` is instantly visible to quicklisp, and it can compile and load that system. That is mighty convenient. That is where we'll be putting all of our projects so that we can load the source.
+We already saw how libraries can be downloaded, installed and loaded with Quicklisp, but what if a library isn't in Quicklisp's repository? When you installed QL, it created a directory called `quicklisp` in your home directory. This is where Quicklisp installs all of the libraries it downloads. Inside it is another directory called `local-projects`. This directory contains locally installed libraries, that weren't downloaded with Quicklisp. Every ASDF system in `local-projects` is instantly visible to Quicklisp, and it can compile and load that system. That is mighty convenient. That is where we'll be putting all of our projects so that we can load the source.
 
 ## restas-project
 
