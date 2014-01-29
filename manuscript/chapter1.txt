@@ -468,7 +468,7 @@ The `post` route handles the case where we are viewing a single blog post. We se
 
 Let's look at the body, each such route template variable is bound to the string that it matched, so we get values like `"0"`, or `"1"` or `"foo"`. Using common lisp's `parse-integer` we convert it to an integer, and we look up the element in the list of posts with the `elt` function, which takes a list (or any lisp sequence) and gets the item at the index we suply as a second argument.
 
-We render the post by passing it as a list to `blogpage`, which returns a string, which in turn, Restas returns to the browser.
+We render the post by passing it as a list to `blogpage`, which returns a string, which Restas in turn returns to the browser.
 
 
 {:lang="common-lisp"}
