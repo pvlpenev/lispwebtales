@@ -60,11 +60,11 @@ This will create a new directory called `hello-world` in `local-projects`. Lets 
 └── tests/
 ~~~~~~~~
 
-`hello-world` contains 3 files and 3 directories. `static` is for any static content we might have, it's 3 sub-directories `css`, `images` and `js` are for css, image files and JavaScript source files respectively. The `templates` directory is for template files we'll write later on. And the `tests` directory is for putting unit tests. Since we didn't tell `restas-project` to generate a test ASDF system, this directory will be unused for now.
+`hello-world` contains 3 files and 3 directories. `static` is for any static content we might have, its 3 sub-directories `css`, `images` and `js` are for css, image files and JavaScript source files respectively. The `templates` directory is for template files we'll write later on. And the `tests` directory is for putting unit tests. Since we didn't tell `restas-project` to generate a test ASDF system, this directory will be unused for now.
 
 ### hello-world.asd
 
-Let's look at the files. First we have the system definition file `hello-world.asd`. Let's have a peak inside:
+Let's look at the files. First we have the system definition file `hello-world.asd`. Let's have a peek inside:
 
 {:lang="common-lisp"}
 ~~~~~~~~
