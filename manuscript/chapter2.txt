@@ -82,7 +82,7 @@ Let's look at the files. First we have the system definition file `hello-world.a
                (:file "hello-world")))
 ~~~~~~~~
 
-The first 3 lines define a config package, we use it simply to have a reference in our running application to the directory the source is located, since we'll need access to static resources that aren't lisp source files, like css files and template files. These lines are not that important, the important part is the `defsystem` definition, let's look it line by line.
+The first 3 lines define a config package, we use it simply to have a reference in our running application to the directory where the source is located, since we'll need access to static resources that aren't lisp source files, like css files and template files. These lines are not that important, the important part is the `defsystem` definition, let's look at it line by line.
 
 The first argument to `defsystem` is the system name, in this case `#:hello-world`. The next line `:serial t` tells asdf that we want our lisp files to be loaded in the order we specify them, since code in latter files might depend on previous files.
 
