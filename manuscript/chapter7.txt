@@ -8,7 +8,7 @@ Redis is a very simple key-value store, it has support for strings, sets, lists 
 
 I assume redis is installed and is running on the local machine. On debian-like systems, this is just an `apt-get install redis-server` away. You can see if redis is running by starting the console client `redis-cli` and typeing `ping` in the prompt, it should respond with "PONG".
 
-Next, let's add `cl-redis`, the lisp client library for redis to our list of dependencies in `linkdemo.asd`. Also, lets add a file named `redis-datastore.lisp` to the project.  This is how our system definition looks like:
+Next, let's add `cl-redis`, the lisp client library for redis to our list of dependencies in `linkdemo.asd`. Also, let's add a file named `redis-datastore.lisp` to the project.  This is how our system definition looks like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -76,7 +76,7 @@ And the corresponding upvote:
 
 ## The implementation
 
-In `redis-datastore.lisp` first lets define our datastore access class. Redis connections take two arguments, a host and a port, by default they are the local host, and 6379, Here is the class:
+In `redis-datastore.lisp` first let's define our datastore access class. Redis connections take two arguments, a host and a port, by default they are the local host, and 6379, Here is the class:
 
 {:lang="common-lisp"}
 ~~~~~~~~

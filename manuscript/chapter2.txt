@@ -38,7 +38,7 @@ Then load restas-project:
  * (ql:quickload "restas-project")
 ~~~~~~~~
 
-After it finishes loading lets create our `hello-world` project:
+After it finishes loading let's create our `hello-world` project:
 
 {:lang="common-lisp"}
 ~~~~~~~~

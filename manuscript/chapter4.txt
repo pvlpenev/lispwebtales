@@ -184,7 +184,7 @@ Updating it wouldn't be too difficult:
           :body (render-post post))))
 ~~~~~~~~
 
-But what if we call the URL `/post/blah`, that would break our program. We need to make sure that `id` is an integer, and signal a `404 not found` to the user otherwise. We already saw that we can add a declaration to a route to specify a render method, but we can also specify other things in declarations. One such thing is the `:sift-variables` declaration, which is used to validate and transform route variables. Lets use it here with `#'parse-integer`:
+But what if we call the URL `/post/blah`, that would break our program. We need to make sure that `id` is an integer, and signal a `404 not found` to the user otherwise. We already saw that we can add a declaration to a route to specify a render method, but we can also specify other things in declarations. One such thing is the `:sift-variables` declaration, which is used to validate and transform route variables. Let's use it here with `#'parse-integer`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -195,7 +195,7 @@ But what if we call the URL `/post/blah`, that would break our program. We need 
           :body (render-post post))))
 ~~~~~~~~
 
-This works, but we now have another problem to solve, what if the user enters a link to a post that doesn't exist yet, if we have only 3 posts, and the user enters `/post/33` the program will break again. Lets define a custom validation function to use with `:sift-variables`:
+This works, but we now have another problem to solve, what if the user enters a link to a post that doesn't exist yet, if we have only 3 posts, and the user enters `/post/33` the program will break again. Let's define a custom validation function to use with `:sift-variables`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -280,7 +280,7 @@ Logging out is simply setting the session value to nil, and redirecting to the h
   (redirect 'home))
 ~~~~~~~~
 
-Now lets handle adding blog posts. Another declaration we can use in routes is `:requirements`. You supply it a predicate, and if it returns nil, restas returns a NOT FOUND page. We'll define such a predicate, since we only want our route to be accessible to logged in users:
+Now let's handle adding blog posts. Another declaration we can use in routes is `:requirements`. You supply it a predicate, and if it returns nil, restas returns a NOT FOUND page. We'll define such a predicate, since we only want our route to be accessible to logged in users:
 
 {:lang="common-lisp"}
 ~~~~~~~~

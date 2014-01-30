@@ -93,7 +93,7 @@ The Restas function `start` is used to initializes a module, and starts a hunche
 
 ## A simple blog
 
-Lets look at a bit more complicated example: a simple blog app. It will be self contained in a single file you can run from the command line, just like the previous example. Subsequent examples will use ASDF and Quicklisp. In addition to Restas and Hunchentoot we'll also be using the SEXML library for html generation. The blog posts will be stored in memory as a list. The basic features would be:
+Let's look at a bit more complicated example: a simple blog app. It will be self contained in a single file you can run from the command line, just like the previous example. Subsequent examples will use ASDF and Quicklisp. In addition to Restas and Hunchentoot we'll also be using the SEXML library for html generation. The blog posts will be stored in memory as a list. The basic features would be:
 
 * View all blog posts on the front page
 * Separate pages for each post
@@ -238,7 +238,7 @@ The username and password for adding new posts, as can be seen in the source, ar
 
 ## Source walk-through
 
-Lets walk through the various sections of this source code and see how it works.
+Let's walk through the various sections of this source code and see how it works.
 
 ### Initialization
 
@@ -331,7 +331,7 @@ and the content can be a string or a list of strings to be inserted into the bod
 
 Will produce the following HTML: `<a href="/foo/bar">This is a link to /foo/bar</a>`
 
-Lets take a look at the various template functions we'll be using:
+Let's take a look at the various template functions we'll be using:
 
 {:lang="common-lisp"}
 ~~~~~~~~

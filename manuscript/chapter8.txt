@@ -42,7 +42,7 @@ For example you can have a main module, and this module has several submodules, 
 (start '#:blogapp.main :port 8080)
 ~~~~~~~~
 
-Pretty much the only thing I need to explain here is the `:url` option. It specifies the url where the module must be mounted. Take the `#:blogapp.blog` module as an example, lets say it has a route with the following template `"post/:id"`, if we mount it under the `"blog"` url, as we've done, the template will now be transformed to `"blog/post/:id"`, and the route will match that url. If we leave out the `:url` option, the routes in the submodule will be treated as if they were top level.
+Pretty much the only thing I need to explain here is the `:url` option. It specifies the url where the module must be mounted. Take the `#:blogapp.blog` module as an example, let's say it has a route with the following template `"post/:id"`, if we mount it under the `"blog"` url, as we've done, the template will now be transformed to `"blog/post/:id"`, and the route will match that url. If we leave out the `:url` option, the routes in the submodule will be treated as if they were top level.
 
 ## Adding a stylesheet to linkdemo
 
@@ -66,7 +66,7 @@ First, we have to add `restas-directory-publisher` as a dependency to the `linkd
                (:file "linkdemo")))
 ~~~~~~~~
 
-Next, lets add the file `static/css/style.css` to our templates. In `template.lisp`, edit `html-frame`:
+Next, let's add the file `static/css/style.css` to our templates. In `template.lisp`, edit `html-frame`:
 
 {:lang="common-lisp"}
 ~~~~~~~~

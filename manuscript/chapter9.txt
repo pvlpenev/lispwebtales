@@ -12,7 +12,7 @@ In this chapter we'll refactor the user handling code from `linkdemo` out into i
 
  * The auth module will also need to know where to redirect the user once a successful operation has occurred. For example the user gets redirected to the home page after a successful login.
 
-Lets start by creating a project:
+Let's start by creating a project:
 
 {:lang="common-lisp"}
 ~~~~~~~~

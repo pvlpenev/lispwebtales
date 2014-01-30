@@ -61,9 +61,9 @@ That's it.
 
 ## What is a policy?
 
-Although we don't need to do so, we'll use the restas policy mechanism to define an interface to our database. But first lets have a short discussion of the problem policies solve for us.
+Although we don't need to do so, we'll use the restas policy mechanism to define an interface to our database. But first let's have a short discussion of the problem policies solve for us.
 
-In our app, if we need to access the database we'll have a bunch of queries. Usually they are encapsulated in functions. So for example we might have a set of function like `(find-user id)` and `(auth-user username password)` which both contain queries written using postmodern. Lets say we want to have the option of using MySQL or some other backend and be able to switch between them. Common Lisp has a powerful OO system that allows us to do this easily. In our project we can define a variable called for example `*datastore*` and depending on its value a different implementation of our database layer gets used. Using generic functions this is easy, we simply define a class for each layer, for example:
+In our app, if we need to access the database we'll have a bunch of queries. Usually they are encapsulated in functions. So for example we might have a set of function like `(find-user id)` and `(auth-user username password)` which both contain queries written using postmodern. Let's say we want to have the option of using MySQL or some other backend and be able to switch between them. Common Lisp has a powerful OO system that allows us to do this easily. In our project we can define a variable called for example `*datastore*` and depending on its value a different implementation of our database layer gets used. Using generic functions this is easy, we simply define a class for each layer, for example:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -215,7 +215,7 @@ Next, we need to define the restas module for our application, and the package w
 
 Notice that linkdemo "uses" the internal package `linkdemo.datastore` where all of the functions like `find-user` are defined, and `linkdemo.pg-datastore` "uses" the interface package `linkdemo.policy.datastore` where the generic functions we need to implement methods for are defined. 
 
-The PostgreSQL backend will be implemented in a new file called `pg-datastore.lisp`, lets add it to `linkdemo.asd`:
+The PostgreSQL backend will be implemented in a new file called `pg-datastore.lisp`, let's add it to `linkdemo.asd`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -284,7 +284,7 @@ We can now do this:
 
 ### DAO classes
 
-Postmodern isn't an ORM, so if you're used to them from places like Django or Rails, you're in luck, because in my very humble opinion, they suck. If you're using a RDBMS, learn the relational model already. Now that I got that rant out of the way, lets move on. Even though it isn't an ORM, postmodern does allow us to work with objects, but they are just simple DAOs(Database Access Objects). DAO objects are defined the same way ordinary lisp objects are, using `defclass`, but they have additional syntax for giving database types to our slots, and we need to add the `dao-class` [^metaclass] to the definition. Here is how the `users` table will be defined:
+Postmodern isn't an ORM, so if you're used to them from places like Django or Rails, you're in luck, because in my very humble opinion, they suck. If you're using a RDBMS, learn the relational model already. Now that I got that rant out of the way, let's move on. Even though it isn't an ORM, postmodern does allow us to work with objects, but they are just simple DAOs(Database Access Objects). DAO objects are defined the same way ordinary lisp objects are, using `defclass`, but they have additional syntax for giving database types to our slots, and we need to add the `dao-class` [^metaclass] to the definition. Here is how the `users` table will be defined:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -319,7 +319,7 @@ CREATE TABLE users (
 )
 ~~~~~~~~
 
-Lets implement the method used for initiating the datastore, creating the tables seems like a good thing to put in it. The generic function is named `datastore-init`, here it is:
+Let's implement the method used for initiating the datastore, creating the tables seems like a good thing to put in it. The generic function is named `datastore-init`, here it is:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -423,7 +423,7 @@ Next, because we need to add the foreign key constrain, we use the `deftable` ma
 
 `!dao-def` tells `deftable` to inherit the field definitions from the dao class definition, and `!foreign` tells `deftable` to add a foreign key constrain to the table. `!foreign`s first parameter is the target table, the second is the field, and if the field has a different name in the definition of the target table, add it as a third parameter.
 
-Lets do the same for `votes`:
+Let's do the same for `votes`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -639,7 +639,7 @@ Note that we use `or` to pass the optional value `username`, in case it is nil, 
 
 ## Exporting the interface
 
-The only thing we'll need to export from this package is the `pg-datastore` classname. Lets do that in `defmodule.lisp`:
+The only thing we'll need to export from this package is the `pg-datastore` classname. Let's do that in `defmodule.lisp`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
