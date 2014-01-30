@@ -103,7 +103,7 @@ I've gone a bit crazy with redefining `html-frame`. When we start our app with `
     (getf context :body))))
 ~~~~~~~~
 
-Since We'll be using the hunchentoot session to store information about the logged in user, we check if the session value `:username` has a value. If it is nil, there is no logged in user, and we display a link to the `login` route we'll define later. If the value is non-nil though, the user can add a post and can also log out, so we display the appropriate links, and display the username of the logged in user.
+Since we'll be using the hunchentoot session to store information about the logged in user, we check if the session value `:username` has a value. If it is nil, there is no logged in user, and we display a link to the `login` route we'll define later. If the value is non-nil though, the user can add a post and can also log out, so we display the appropriate links, and display the username of the logged in user.
 
 The `render-post` function remains the same:
 
@@ -226,7 +226,7 @@ For the `author` route we'll also want to add such validation. First we'll need 
        collect (getf post :author-id)))
 ~~~~~~~~
 
-Now the validation function its self:
+Now the validation function itself:
 
 {:lang="common-lisp"}
 ~~~~~~~~
