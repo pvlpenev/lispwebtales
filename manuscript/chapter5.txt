@@ -10,7 +10,7 @@ In this chapter I'll use PostgreSQL and the excellent `postmodern` library, whic
 
 ### Linux
 
-Install postgresql using your distros package manager, for Debian based distros this looks like:
+Install postgresql using your distro's package manager, for Debian based distros this looks like:
 
 ~~~~~~~~
  # apt-get install postgresql
