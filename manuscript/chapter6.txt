@@ -178,7 +178,7 @@ Now, let's handle the login form:
         (redirect 'login))))
 ~~~~~~~~
 
-This route is fairly simple, we pass the post data to `auth-user`, which as we already said, will call the method `datastore-auth-user` and return a username if it is successful. We check if it is, and if so, we log the user in using the function `log-in`, otherwise we redirect the user to try again. Here is `log-in`s definition is util.lisp:
+This route is fairly simple, we pass the post data to `auth-user`, which as we already said, will call the method `datastore-auth-user` and return a username if it is successful. We check if it is, and if so, we log the user in using the function `log-in`, otherwise we redirect the user to try again. Here is `log-in`s definition in util.lisp:
 
 {:lang="common-lisp"}
 ~~~~~~~~
