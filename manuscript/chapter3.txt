@@ -134,7 +134,7 @@ Now, let's load the system, and see if our template compiled:
  => "<html> <head> <title></title> </head> <body>  </body> </html>"
 ~~~~~~~~
 
-Let's examine the new syntax in the template. Tags starting with a `$`, like `{$title}` simply print the content of the variable `title` to be into the output of the template. It's actually a short hand for the expression `{print title}`, but since it is used very often it was shortened to just `$`. Variables are passed to templates like as plists. Like so:
+Let's examine the new syntax in the template. Tags starting with a `$`, like `{$title}`, simply print the content of the variable `title` to be into the output of the template. It's actually a short hand for the expression `{print title}`, but since it is used very often it was shortened to just `$`. Variables are passed to templates like as plists. Like so:
 
 {:lang="common-lisp"}
 ~~~~~~~~
