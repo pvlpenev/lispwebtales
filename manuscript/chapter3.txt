@@ -83,7 +83,7 @@ I'll explain the rest of the syntax we'll need as we go along.
 
 ### More complex example
 
-Lets create a new Restas project where we can play around with closure templates. Let's call it `closure-hello`:
+Let's create a new Restas project where we can play around with closure templates. Let's call it `closure-hello`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -196,9 +196,9 @@ Confirm that it works in the browser:
 
 Yay!
 
-### Next step: Lets do some loops.
+### Next step: Let's do some loops.
 
-The data we pass to the templates can be either plists like we already saw, or they can be just lists of items we can handle with loops. For example `(list "val1" "val2" "val3")`. And of course we can nest them as we wish. We'll define a new page, where we will list a bunch of items in an html list. Lets say we have a list of TODO items, here is how the template would look like, add this code to the main.tmpl file:
+The data we pass to the templates can be either plists like we already saw, or they can be just lists of items we can handle with loops. For example `(list "val1" "val2" "val3")`. And of course we can nest them as we wish. We'll define a new page, where we will list a bunch of items in an html list. Let's say we have a list of TODO items, here is what the template would look like, add this code to the main.tmpl file:
 
 {:lang="html"}
 ~~~~~~~~
@@ -214,7 +214,7 @@ The data we pass to the templates can be either plists like we already saw, or t
 
 `$todos` is the variable we pass directly to the template, foreach will loop through the contents, and put each item in the variable `$task`, which we can use in the body. The body outputs each list item.
 
-Now lets add the handler in `closure-hello.lisp`, first we define a variable named *todos*, and then we define a restas route to handle requests to todos/, here is how the whole file should look like:
+Now let's add the handler in `closure-hello.lisp`, first we define a variable named *todos*, and then we define a restas route to handle requests to todos/, here is what the whole file should look like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -237,7 +237,7 @@ Now lets add the handler in `closure-hello.lisp`, first we define a variable nam
          :body (closure-hello.view:todos (list :todos *todos*)))))
 ~~~~~~~~
 
-Notice that the code for the `todos` route is pretty much the same as for `main`, but we pass the output of the `todos` template to the body parameter of the `main` template, here is how it should look like in the browser when you navigate to the [http://localhost:8080/todos] url:
+Notice that the code for the `todos` route is pretty much the same as for `main`, but we pass the output of the `todos` template to the body parameter of the `main` template, here is what it should look like in the browser when you navigate to the [http://localhost:8080/todos] url:
 
 ![](images/c3i2.png)
 
@@ -255,7 +255,7 @@ Closure has support for conditionals, we'll only take a look at a simple example
 {/if}
 ~~~~~~~~
 
-We want to add a link at the top of our main page to our todos page, but we also want to add a link to the main page, on our todos page. We'll add a conditional in our `main` template to check on which page we are, and put the appropriate link there. Here is how our template should look like:
+We want to add a link at the top of our main page to our todos page, but we also want to add a link to the main page, on our todos page. We'll add a conditional in our `main` template to check on which page we are, and put the appropriate link there. Here is what our template should look like:
 
 {:lang="html"}
 ~~~~~~~~
