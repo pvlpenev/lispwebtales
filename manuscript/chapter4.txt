@@ -70,7 +70,7 @@ and finally we paste the `sexml` initialization code:
 
 ## Updating the templates
 
-First, Let's create a template.lisp file, like we specified in the `asd` file. We set it's package to be `blogdemo` and specify that sexml should augment it's output with a doctype:
+First, let's create a template.lisp file, like we specified in the `asd` file. We set its package to be `blogdemo` and specify that sexml should augment its output with a doctype:
 
 {:lang="common-lisp"}
 ~~~~~~~~
