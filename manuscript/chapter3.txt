@@ -317,7 +317,7 @@ And here are the screenshots:
 
 ### About routes and templates.
 
-A common pattern we see is that all of the routes is that they all call the same template, `closure-hello.view:main` to render their content. It would be nice to tell Restas to use the same template on all of the routes. I haven't talked in depth about how routes work, but in general, a route can return several types of values, if it returns an integer, say `404`, that will be interpreted as an HTTP status code, and an appropriate page will be returned to the user. If it returns a string, that string will be the body of the response, the routes we've seen so far are this kind. A route can also return a common-lisp pathname object, in which case hunchentoot will serve that file to the user. We can have a route like this in order to serve a static css file:
+A common pattern we see is that all of the routes is that they all call the same template, `closure-hello.view:main` to render their content. It would be nice to tell Restas to use the same template on all of the routes. I haven't talked in depth about how routes work, but in general, a route can return several types of values, if it returns an integer, say `404`, that will be interpreted as an HTTP status code, and an appropriate page will be returned to the user. If it returns a string, that string will be the body of the response, the routes we've seen so far are of this kind. A route can also return a common-lisp pathname object, in which case hunchentoot will serve that file to the user. We can have a route like this in order to serve a static css file:
 
 {:lang="common-lisp"}
 ~~~~~~~~
