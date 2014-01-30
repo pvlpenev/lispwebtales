@@ -47,7 +47,7 @@ A closure template can be defined either in a file or a string. Both starting wi
 {/template}
 ~~~~~~~~
 
-Once compiled, this code will generate a Common Lisp package named `hello` and containing the function `main`. Let's try it at the REPL:
+Once compiled, this code will generate a Common Lisp package named `hello` containing the function `main`. Let's try it at the REPL:
 
 {:lang="common-lisp"}
 ~~~~~~~~
