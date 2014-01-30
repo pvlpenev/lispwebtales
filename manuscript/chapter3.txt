@@ -6,7 +6,7 @@
 
 An html generator is a library to generate html from lisp code. SEXML, the library we saw earlier is an example of one such generator. There are as many such libraries as there are lisp programmers, I'll lie to you if I told you I didn't try writing one myself. [Cliki][gen] lists 12, and that is certainly not all of them. The most popular such library is `cl-who` and it is the most likely for you to come across if you read other peoples code. But I, and many others don't like `cl-who`(not that it's bad, just not my taste), so I just picked another one for the examples in this book. Namely SEXML.
 
-A note about SEXML, when we want to use it in a project, we'll add it's initialization code to the `defmodule.lisp` file:
+A note about SEXML, when we want to use it in a project, we'll add its initialization code to the `defmodule.lisp` file:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -25,7 +25,7 @@ In chapter one, since you didn't yet know what asdf was, I didn't explain the li
 
 ### Template languages
 
-In most other languages, you don't have dsl's for outputting html, like in lisp, so you tend to use templates. Common Lisp has a few of those. Most popular is probably [`html-template`](http://weitz.de/html-template/) by Hunchentoot creator(among other things, including cl-who) Edi Weitz. Its documentation page claims it is loosely based on a similar Perl library. 
+In most other languages, you don't have dsls for outputting html, like in lisp, so you tend to use templates. Common Lisp has a few of those. Most popular is probably [`html-template`](http://weitz.de/html-template/) by Hunchentoot creator (among other things, including cl-who) Edi Weitz. Its documentation page claims it is loosely based on a similar Perl library. 
 
 The one I'm going to be using for some of my examples is the Common Lisp port of Google's Closure Template system, written by the creator of Restas, Andrey Moskvitin. 
 
@@ -166,7 +166,7 @@ The | in the expression `{$body | noAutoescape}` is used to give the `print` com
 
 The `<h1>` tag got replaced with `&lt;h1&gt;`, and `</h1>` with `&lt;/h1&gt;`.
 
-Lets define a handler, this is how the closure-hello.lisp file looks like:
+Let's define a handler, this is how the closure-hello.lisp file looks like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
