@@ -166,7 +166,7 @@ The | in the expression `{$body | noAutoescape}` is used to give the `print` com
 
 The `<h1>` tag got replaced with `&lt;h1&gt;`, and `</h1>` with `&lt;/h1&gt;`.
 
-Let's define a handler, this is how the closure-hello.lisp file looks like:
+Let's define a handler, this is what the closure-hello.lisp file looks like:
 
 {:lang="common-lisp"}
 ~~~~~~~~

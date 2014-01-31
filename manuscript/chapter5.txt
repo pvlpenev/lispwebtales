@@ -564,7 +564,7 @@ Upvoting a link involves finding the id of the user, checking if the user hasn't
           link-id)))))
 ~~~~~~~~
 
-For posting a link, we want the user submitting it to also automatically upvote it. In order to do that though, we have to use a DAO, since `query` will not return us the inserted value, and we need the links id in order to upvote it. After we `save-dao` the DAO though, its `link-id` accessor function will return it for us and we can upvote it. This is how it looks like:
+For posting a link, we want the user submitting it to also automatically upvote it. In order to do that though, we have to use a DAO, since `query` will not return us the inserted value, and we need the links id in order to upvote it. After we `save-dao` the DAO though, its `link-id` accessor function will return it for us and we can upvote it. This is what it looks like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
