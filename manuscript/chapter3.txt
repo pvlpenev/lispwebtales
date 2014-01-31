@@ -109,7 +109,7 @@ Create the file templates/main.tmpl and put the following code into it:
 {/template}
 ~~~~~~~~
 
-Now let's tell ASDF that we want this file to be compiled when we load our project, we do this by adding two things to the `defsystem` form in `closure-hello.asd`. First is the option `:defsystem-depends-on (#:closure-template)`, because ASDF needs closure-template in order to know how to compile closure templates. Second, we must specify the file as a component of type `:closure-template`, so our `defsystem` should look like this:
+Now let's tell ASDF that we want this file to be compiled when we load our project, we do this by adding two things to the `defsystem` form in `closure-hello.asd`. First is the option `:depends-on (#:closure-template)`, because ASDF needs closure-template in order to know how to compile closure templates. Second, we must specify the file as a component of type `:closure-template`, so our `defsystem` should look like this:
 
 {:lang="common-lisp"}
 ~~~~~~~~
