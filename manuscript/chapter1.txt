@@ -64,7 +64,7 @@ As you can read in the Appendix A, the way we install and load libraries with Qu
 (in-package #:hello-world)
 ~~~~~~~~
 
-Restas applications live in modules, which are similar to ordinary common lisp packages(and in fact, a package is being generated behind the scenes for us), we define them with the macro `define-module` from the `restas` package. It has the same syntax as common lisps `defpackage`. We give our module the name `hello-world` and specify that we want all public symbols in the `cl` and `restas` packages to be imported into our module. We then set the current package to `hello-world`. All the code after this form to the end of the file will be in that package.
+Restas applications live in modules, which are similar to ordinary common lisp packages (and in fact, a package is being generated behind the scenes for us), we define them with the macro `define-module` from the `restas` package. It has the same syntax as common lisps `defpackage`. We give our module the name `hello-world` and specify that we want all public symbols in the `cl` and `restas` packages to be imported into our module. We then set the current package to `hello-world`. All the code after this form to the end of the file will be in that package.
 
 Symbols starting with `#:` are uninterned, meaning they have no package, we just want to use its namestring, which is
 `"HELLO-WORLD"`. Uninterned symbols are useful if you want a lightweight string to name something, in this case a package.
