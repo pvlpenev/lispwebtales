@@ -183,7 +183,7 @@ Registering the user on the other hand is a bit more involved. First we must cre
 
 ## Handling upvotes
 
-Checking if a user has upvoted a link is as easy as checking to see if that user is in the set of upvoters for that link. Sets in redis are accessed with the `red-sismember` command(which I assume stands for "set is member"). It simply takes a key and a value and checks to see if that value is in the set denoted by the key:
+Checking if a user has upvoted a link is as easy as checking to see if that user is in the set of upvoters for that link. Sets in redis are accessed with the `red-sismember` command (which I assume stands for "set is member"). It simply takes a key and a value and checks to see if that value is in the set denoted by the key:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -286,5 +286,5 @@ Further reading:
 
 * [Redis home page](http://www.redis.io/)
 * [List of Redis commands](http://www.redis.io/commands)
-* [The Beauty of Simplicity: Mastering Database Design Using Redis by Ryan Briones(video)](http://vimeo.com/26385026)
-* [The Beauty of Simplicity: Mastering Database Design Using Redis by Ryan Briones(slides)](http://www.slideshare.net/ryanbriones/the-beauty-of-simplicity-mastering-database-design-with-redis)
+* [The Beauty of Simplicity: Mastering Database Design Using Redis by Ryan Briones (video)](http://vimeo.com/26385026)
+* [The Beauty of Simplicity: Mastering Database Design Using Redis by Ryan Briones (slides)](http://www.slideshare.net/ryanbriones/the-beauty-of-simplicity-mastering-database-design-with-redis)
