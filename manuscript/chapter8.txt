@@ -42,7 +42,7 @@ For example you can have a main module, and this module has several submodules, 
 (start '#:blogapp.main :port 8080)
 ~~~~~~~~
 
-Pretty much the only thing I need to explain here is the `:url` option. It specifies the url where the module must be mounted. Take the `#:blogapp.blog` module as an example, lets say it has a route with the following template `"post/:id"`, if we mount it under the `"blog"` url, as we've done, the template will now be transformed to `"blog/post/:id"`, and the route will match that url. If we leave out the `:url` option, the routes in the submodule will be treated as if they were top level.
+Pretty much the only thing I need to explain here is the `:url` option. It specifies the url where the module must be mounted. Take the `#:blogapp.blog` module as an example, let's say it has a route with the following template `"post/:id"`, if we mount it under the `"blog"` url, as we've done, the template will now be transformed to `"blog/post/:id"`, and the route will match that url. If we leave out the `:url` option, the routes in the submodule will be treated as if they were top level.
 
 ## Adding a stylesheet to linkdemo
 
@@ -66,7 +66,7 @@ First, we have to add `restas-directory-publisher` as a dependency to the `linkd
                (:file "linkdemo")))
 ~~~~~~~~
 
-Next, lets add the file `static/css/style.css` to our templates. In `template.lisp`, edit `html-frame`:
+Next, let's add the file `static/css/style.css` to our templates. In `template.lisp`, edit `html-frame`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -115,7 +115,7 @@ Other than the `:url` declaration, we have a variable binding. The variable `res
 
 ## Contexts
 
-A set of such variables, like `restas.directory-publisher:*directory*` exported from a module, and later bound when mounting a module are called a context. One way to explain what a module context is, is to expand on the OO metaphor. When me "instantiate" a module with `mount-module`, we set the current "instance" variables. If we were to mount the same module more than once(let's say we have more than one static directory we want to serve) we would give the two mounts different values. Although there is just one variable(in the lisp sense) called `restas.directory-publisher:*directory*`, at request time Restas will bind it to the right context value depending on which mounted module is handling the request.
+A set of such variables, like `restas.directory-publisher:*directory*` exported from a module, and later bound when mounting a module are called a context. One way to explain what a module context is, is to expand on the OO metaphor. When me "instantiate" a module with `mount-module`, we set the current "instance" variables. If we were to mount the same module more than once (let's say we have more than one static directory we want to serve) we would give the two mounts different values. Although there is just one variable (in the lisp sense) called `restas.directory-publisher:*directory*`, at request time Restas will bind it to the right context value depending on which mounted module is handling the request.
 
 In other words, a context is just a set of `(defvar *foo* ...)` inside a module, that are being rebound depending on which mounted module the route that handles the request belongs to. I hope I haven't confused you. This mechanism gives us a lot of power to reuse and configure modules.
 
@@ -127,6 +127,6 @@ In the next chapters we'll examine modules in a bit more depth with a few exampl
 
 Some links:
 
-* OUTDATED(but might give you a sense of the general idea): [Restas docs on modules](http://restas.lisper.ru/en/manual/modules.html)
+* OUTDATED (but might give you a sense of the general idea): [Restas docs on modules](http://restas.lisper.ru/en/manual/modules.html)
 
-* Blog post explaining the new Restas module system(IN RUSSIAN): [Изменение системы модулей в RESTAS](http://archimag.lisper.ru/2013/01/02/%D0%98%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B5_%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D1%8B_%D0%BC%D0%BE%D0%B4%D1%83%D0%BB%D0%B5%D0%B9_%D0%B2_RESTAS)
+* Blog post explaining the new Restas module system (IN RUSSIAN): [Изменение системы модулей в RESTAS](http://archimag.lisper.ru/2013/01/02/%D0%98%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B5_%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D1%8B_%D0%BC%D0%BE%D0%B4%D1%83%D0%BB%D0%B5%D0%B9_%D0%B2_RESTAS)

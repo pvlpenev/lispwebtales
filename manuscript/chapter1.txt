@@ -64,7 +64,7 @@ As you can read in the Appendix A, the way we install and load libraries with Qu
 (in-package #:hello-world)
 ~~~~~~~~
 
-Restas applications live in modules, which are similar to ordinary common lisp packages(and in fact, a package is being generated behind the scenes for us), we define them with the macro `define-module` from the `restas` package. It has the same syntax as common lisps `defpackage`. We give our module the name `hello-world` and specify that we want all public symbols in the `cl` and `restas` packages to be imported into our module. We then set the current package to `hello-world`. All the code after this form to the end of the file will be in that package.
+Restas applications live in modules, which are similar to ordinary common lisp packages (and in fact, a package is being generated behind the scenes for us), we define them with the macro `define-module` from the `restas` package. It has the same syntax as common lisps `defpackage`. We give our module the name `hello-world` and specify that we want all public symbols in the `cl` and `restas` packages to be imported into our module. We then set the current package to `hello-world`. All the code after this form to the end of the file will be in that package.
 
 Symbols starting with `#:` are uninterned, meaning they have no package, we just want to use its namestring, which is
 `"HELLO-WORLD"`. Uninterned symbols are useful if you want a lightweight string to name something, in this case a package.
@@ -93,7 +93,7 @@ The Restas function `start` is used to initializes a module, and starts a hunche
 
 ## A simple blog
 
-Lets look at a bit more complicated example: a simple blog app. It will be self contained in a single file you can run from the command line, just like the previous example. Subsequent examples will use ASDF and Quicklisp. In addition to Restas and Hunchentoot we'll also be using the SEXML library for html generation. The blog posts will be stored in memory as a list. The basic features would be:
+Let's look at a bit more complicated example: a simple blog app. It will be self contained in a single file you can run from the command line, just like the previous example. Subsequent examples will use ASDF and Quicklisp. In addition to Restas and Hunchentoot we'll also be using the SEXML library for html generation. The blog posts will be stored in memory as a list. The basic features would be:
 
 * View all blog posts on the front page
 * Separate pages for each post
@@ -238,7 +238,7 @@ The username and password for adding new posts, as can be seen in the source, ar
 
 ## Source walk-through
 
-Lets walk through the various sections of this source code and see how it works.
+Let's walk through the various sections of this source code and see how it works.
 
 ### Initialization
 
@@ -270,7 +270,7 @@ This time our application is named `blogdemo`.
 (<:augment-with-doctype "html" "")
 ~~~~~~~~
 
-SEXML is a library for outputting XML using lisp s-expressions as input. It takes an xml dtd and generates a package with functions for all the necessary tags. In our case, we give it an html5 dtd, and specify the package named `<`. This means that we can write code like:
+SEXML is a library for outputting XML using lisp s-expressions as input. It takes an xml dtd and generates a package with functions for all the necessary tags. In our case, we give it an html5 dtd, and specify the package name `<`. This means that we can write code like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -331,7 +331,7 @@ and the content can be a string or a list of strings to be inserted into the bod
 
 Will produce the following HTML: `<a href="/foo/bar">This is a link to /foo/bar</a>`
 
-Lets take a look at the various template functions we'll be using:
+Let's take a look at the various template functions we'll be using:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -352,7 +352,7 @@ Lets take a look at the various template functions we'll be using:
 (html-frame "This is a title" "This is a body")
 ~~~~~~~~
 
-And get the following output as a lisp string(I've indented it, and broken it up to separate lines):
+And get the following output as a lisp string (I've indented it, and broken it up to separate lines):
 
 {:lang="html"}
 ~~~~~~~~
@@ -367,7 +367,7 @@ And get the following output as a lisp string(I've indented it, and broken it up
 </html>
 ~~~~~~~~
 
-Of note is the use of the restas function `genurl` which takes a route, and generates a url that would be handled by the route function. In this case `(genurl 'home)` will generate the `/` url, since that is what the `home` route(defined in the next section) handles. This is done because restas applications can me "mounted" on different points in a url path tree. if the whole application is mounted on the uri `/blog`, then the same code(without having to change it) would generate `/blog/` as the output.
+Of note is the use of the restas function `genurl` which takes a route, and generates a url that would be handled by the route function. In this case `(genurl 'home)` will generate the `/` url, since that is what the `home` route (defined in the next section) handles. This is done because restas applications can me "mounted" on different points in a url path tree. if the whole application is mounted on the uri `/blog`, then the same code (without having to change it) would generate `/blog/` as the output.
 
 
 
@@ -381,7 +381,7 @@ Before we look at how we generate the blog posts themselves, let me explain how 
   :content "This is the body of the blog post")
 ~~~~~~~~
 
-By convention, keys in plists are common lisp keywords, starting with colons. Elements in a plist can be accessed with the function `getf`, which takes a plist and a key as it's argument. So if we wanted to get the name of the author from the plist `post`, we would write `(getf post :author)`. Simple as that. Now lets look at how we use them:
+By convention, keys in plists are common lisp keywords, starting with colons. Elements in a plist can be accessed with the function `getf`, which takes a plist and a key as its argument. So if we wanted to get the name of the author from the plist `post`, we would write `(getf post :author)`. Simple as that. Now let's look at how we use them:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -400,7 +400,7 @@ By convention, keys in plists are common lisp keywords, starting with colons. El
   (mapcar #'render-post posts))
 ~~~~~~~~
 
-The function `render-post` takes a blog post and renders it as html. The `genurl`'s in this function are a bit more complicated. In this case `genurl` has to  generate urls to each individual post, which requires additional information, such as it's ID. We use the posts position is the list of posts as it's id, so each post would have a url like `posts/1` or whatever it's number in the list is. Same is true for the author, except authors are identified by a slug of their name. so the url would look like `author/author-name`. This works because routes can handle more than one url with similar structure, for instance both `posts/1` and `posts/2` will be handled by the route `post`, We'll see how that works in a minute.
+The function `render-post` takes a blog post and renders it as html. The `genurl`s in this function are a bit more complicated. In this case `genurl` has to  generate urls to each individual post, which requires additional information, such as its ID. We use the post's position is the list of posts as its id, so each post would have a url like `posts/1` or whatever its number in the list is. Same is true for the author, except authors are identified by a slug of their name. so the url would look like `author/author-name`. This works because routes can handle more than one url with similar structure, for instance both `posts/1` and `posts/2` will be handled by the route `post`, We'll see how that works in a minute.
 
 The function `render-posts` simply takes a list of posts, and renders each one individually, into a list of html strings. It uses the `mapcar` function, which might be called `map` or `each` in other languages.
 
@@ -446,7 +446,7 @@ Route handlers are the heart of any Restas application. The complete syntax for 
   body*)
 ~~~~~~~~
 
-We've seen a very basic usage of this. The blog example doesn't use the optional declarations, we'll cover them later, but the optional method keyword parameter will come in handy when we need to handle `POST` data from a form. By default it's value is `:get`, but can be any HTTP method. Using this we can have routes with the same uri template, but different HTTP methods, this makes Restas very well suited for RESTful APIs as the name suggests. Let's take a look at the individual routes:
+We've seen a very basic usage of this. The blog example doesn't use the optional declarations, we'll cover them later, but the optional method keyword parameter will come in handy when we need to handle `POST` data from a form. By default its value is `:get`, but can be any HTTP method. Using this we can have routes with the same uri template, but different HTTP methods, this makes Restas very well suited for RESTful APIs as the name suggests. Let's take a look at the individual routes:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -466,9 +466,9 @@ Simply displays the home page.
 
 The `post` route handles the case where we are viewing a single blog post. We see that the `post` route has an interesting template: `"post/:id"`. If you are familiar with something like Sinatra, you'll find this syntax familiar. Parts of a uri template beginning with a colon designate route variables, and can match any uri with that structure, as I mentioned in the previous section. For example `/post/0`, `/post/1` and `/post/2` will all match and be handled by this route. But so will `/post/foo`, our app breaks if we go to a url that doesn't have an integer url component. We'll see later how we can fix this, for now, we simply don't do that. The matched string also gets bound to a lisp variable in the body of the route, in our case `id`.
 
-Lets look at the body, each such route template variable is bound to the string that it matched, so we get values like `"0"`, or `"1"` or `"foo"`. Using common lisps `parse-integer` we convert it to an integer, and we look up the element in the list of posts with the `elt` function, which takes a list(or any lisp sequence) and gets the item at the index we suply as a second argument.
+Let's look at the body, each such route template variable is bound to the string that it matched, so we get values like `"0"`, or `"1"` or `"foo"`. Using common lisp's `parse-integer` we convert it to an integer, and we look up the element in the list of posts with the `elt` function, which takes a list (or any lisp sequence) and gets the item at the index we suply as a second argument.
 
-We render the post by passing it as a list to `blogpage`, which returns a string, which in turn, Restas returns to the browser.
+We render the post by passing it as a list to `blogpage`, which returns a string, which Restas in turn returns to the browser.
 
 
 {:lang="common-lisp"}
@@ -480,7 +480,7 @@ We render the post by passing it as a list to `blogpage`, which returns a string
     (blogpage posts)))
 ~~~~~~~~
 
-The `author` route is very similar. we have an `:id` variable as well, but it can be any string, so we don't worry about parsing it. We use common lisps powerful loop macro to iterate over all the posts, and if the id we supply in the url matches the `:author-id`s of the individual posts, we collect them into a new list. `:author-id` is generated as a slug version of the author name, specifically so that we can use it as a key and as a part of a url. 
+The `author` route is very similar. we have an `:id` variable as well, but it can be any string, so we don't worry about parsing it. We use common lisp's powerful loop macro to iterate over all the posts, and if the id we supply in the url matches the `:author-id`s of the individual posts, we collect them into a new list. `:author-id` is generated as a slug version of the author name, specifically so that we can use it as a key and as a part of a url. 
 
 If we have blog posts by an author named `"Pavel Penev"`, its slug would have been saved it into the database as `"pavel-penev"`, and if we go to the uri `author/pavel-penev`, we'll see all the posts by that author on the page. 
 
@@ -497,7 +497,7 @@ If we have blog posts by an author named `"Pavel Penev"`, its slug would have be
 
 The `add` route handles displaying a form for the user to submit a blog post. Since we don't want just anybody to add posts, we want to add some user authentication, but since this is just a simple example, I won't bother with login forms, cookies and sessions, we'll leave that for a later chapter. For now I'll use simple HTTP authorization.
 
-If you are unfamiliar with HTTP authentication, it is a very crude way to log into a web site. The browser has to supply a username and a password as an HTTP header. The function `hunchentoot:authorization` returns them as two separate values, since common lisp supports multiple return values, instead of just one(as is the case in probably every other language you've ever used), we have to bind them using the macro `multiple-value-bind`, which is like `let` for multiple values. It binds the variables `username` and `password` and in the body we check if they are the expected values, in our case "user" and "pass". If they are, we render our form, and if not, we tell the browser to ask the user for a username and password using `hunchentoot:require-authorization'.  
+If you are unfamiliar with HTTP authentication, it is a very crude way to log into a web site. The browser has to supply a username and a password as an HTTP header. The function `hunchentoot:authorization` returns them as two separate values, since common lisp supports multiple return values, instead of just one (as is the case in probably every other language you've ever used), we have to bind them using the macro `multiple-value-bind`, which is like `let` for multiple values. It binds the variables `username` and `password` and in the body we check if they are the expected values, in our case "user" and "pass". If they are, we render our form, and if not, we tell the browser to ask the user for a username and password using `hunchentoot:require-authorization'.  
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -512,7 +512,7 @@ If you are unfamiliar with HTTP authentication, it is a very crude way to log in
     (redirect 'home)))
 ~~~~~~~~
 
-Finally, `add/post` handles the data send to us by the form generated by `add`. We specify that the http method should be `POST`, and use the function `hunchentoot:post-parameter` to extract the user submitted values from the request. The strings `"author"`, `"title"` and `"content"` were the names of fields in our form. We bind them to values, and built a plist using the function `list`. Note that we add the `:author-id` key, with a value generated by applying `slug` to the `author` string. The list we `push` onto the database variable `*posts*`. `push` takes an item, and adds it to the front of a list. At the end we `redirect` back to the home page. `redirect` is a restas function with much the same syntax as `genurl` but instead of generating a url out of a route name, it generates the url, and tells the browser to redirect to it.
+Finally, `add/post` handles the data send to us by the form generated by `add`. We specify that the http method should be `POST`, and use the function `hunchentoot:post-parameter` to extract the user-submitted values from the request. The strings `"author"`, `"title"` and `"content"` were the names of fields in our form. We bind them to values, and built a plist using the function `list`. Note that we add the `:author-id` key, with a value generated by applying `slug` to the `author` string. The list we `push` onto the database variable `*posts*`. `push` takes an item, and adds it to the front of a list. At the end we `redirect` back to the home page. `redirect` is a restas function with much the same syntax as `genurl` but instead of generating a url out of a route name, it generates the url, and tells the browser to redirect to it.
 
 ## Conclusion
 

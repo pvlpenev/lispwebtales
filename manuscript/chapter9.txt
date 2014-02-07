@@ -2,7 +2,7 @@
 
 ## Introduction
 
-In this chapter we'll refactor the user handling code from `linkdemo` out into it's own project, which we can then reuse in other apps as well. First, let's state explicitly how will the authentication module interact with the rest of the system:
+In this chapter we'll refactor the user handling code from `linkdemo` out into it's own project, which we can then reuse in other apps as well. First, let's state explicitly how the authentication module will interact with the rest of the system:
 
  * I want the module to know as little as possible about how users are actually represented. What this means is that the module will be passed references to functions that will handle user creation and authentication. Essentially these will be context variables set on module initialization. What we get from this is that we won't have to worry about implementing a policy or even knowing that one exists. We just call functions that the user of the module gave us.
 
@@ -12,7 +12,7 @@ In this chapter we'll refactor the user handling code from `linkdemo` out into i
 
  * The auth module will also need to know where to redirect the user once a successful operation has occurred. For example the user gets redirected to the home page after a successful login.
 
-Lets start by creating a project:
+Let's start by creating a project:
 
 {:lang="common-lisp"}
 ~~~~~~~~

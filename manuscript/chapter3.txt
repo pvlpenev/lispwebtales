@@ -6,7 +6,7 @@
 
 An html generator is a library to generate html from lisp code. SEXML, the library we saw earlier is an example of one such generator. There are as many such libraries as there are lisp programmers, I'll lie to you if I told you I didn't try writing one myself. [Cliki][gen] lists 12, and that is certainly not all of them. The most popular such library is `cl-who` and it is the most likely for you to come across if you read other peoples code. But I, and many others don't like `cl-who`(not that it's bad, just not my taste), so I just picked another one for the examples in this book. Namely SEXML.
 
-A note about SEXML, when we want to use it in a project, we'll add it's initialization code to the `defmodule.lisp` file:
+A note about SEXML, when we want to use it in a project, we'll add its initialization code to the `defmodule.lisp` file:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -25,7 +25,7 @@ In chapter one, since you didn't yet know what asdf was, I didn't explain the li
 
 ### Template languages
 
-In most other languages, you don't have dsl's for outputting html, like in lisp, so you tend to use templates. Common Lisp has a few of those. Most popular is probably [`html-template`](http://weitz.de/html-template/) by Hunchentoot creator(among other things, including cl-who) Edi Weitz. Its documentation page claims it is loosely based on a similar Perl library. 
+In most other languages, you don't have dsls for outputting html, like in lisp, so you tend to use templates. Common Lisp has a few of those. Most popular is probably [`html-template`](http://weitz.de/html-template/) by Hunchentoot creator (among other things, including cl-who) Edi Weitz. Its documentation page claims it is loosely based on a similar Perl library. 
 
 The one I'm going to be using for some of my examples is the Common Lisp port of Google's Closure Template system, written by the creator of Restas, Andrey Moskvitin. 
 
@@ -47,7 +47,7 @@ A closure template can be defined either in a file or a string. Both starting wi
 {/template}
 ~~~~~~~~
 
-Once compiled, this code will generate a Common Lisp package named `hello` and containing the function `main`. Let's try it at the REPL:
+Once compiled, this code will generate a Common Lisp package named `hello` containing the function `main`. Let's try it at the REPL:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -83,7 +83,7 @@ I'll explain the rest of the syntax we'll need as we go along.
 
 ### More complex example
 
-Lets create a new Restas project where we can play around with closure templates. Let's call it `closure-hello`:
+Let's create a new Restas project where we can play around with closure templates. Let's call it `closure-hello`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -109,7 +109,7 @@ Create the file templates/main.tmpl and put the following code into it:
 {/template}
 ~~~~~~~~
 
-Now let's tell ASDF that we want this file to be compiled when we load our project, we do this by adding two things to the `defsystem` form in `closure-hello.asd`. First is the option `:defsystem-depends-on (#:closure-template)`, because ASDF needs closure-template in order to know how to compile closure templates. Second, we must specify the file as a component of type `:closure-template`, so our `defsystem` should look like this:
+Now let's tell ASDF that we want this file to be compiled when we load our project, we do this by adding two things to the `defsystem` form in `closure-hello.asd`. First is the option `:depends-on (#:closure-template)`, because ASDF needs closure-template in order to know how to compile closure templates. Second, we must specify the file as a component of type `:closure-template`, so our `defsystem` should look like this:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -134,7 +134,7 @@ Now, let's load the system, and see if our template compiled:
  => "<html> <head> <title></title> </head> <body>  </body> </html>"
 ~~~~~~~~
 
-Let's examine the new syntax in the template. Tags starting with a `$`, like `{$title}` simply print the content of the variable `title` to be into the output of the template. It's actually a short hand for the expression `{print title}`, but since it is used very often it was shortened to just `$`. Variables are passed to templates like as plists. Like so:
+Let's examine the new syntax in the template. Tags starting with a `$`, like `{$title}`, simply print the content of the variable `title` to be into the output of the template. It's actually a short hand for the expression `{print title}`, but since it is used very often it was shortened to just `$`. Variables are passed to templates like as plists. Like so:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -166,7 +166,7 @@ The | in the expression `{$body | noAutoescape}` is used to give the `print` com
 
 The `<h1>` tag got replaced with `&lt;h1&gt;`, and `</h1>` with `&lt;/h1&gt;`.
 
-Lets define a handler, this is how the closure-hello.lisp file looks like:
+Let's define a handler, this is what the closure-hello.lisp file looks like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -196,9 +196,9 @@ Confirm that it works in the browser:
 
 Yay!
 
-### Next step: Lets do some loops.
+### Next step: Let's do some loops.
 
-The data we pass to the templates can be either plists like we already saw, or they can be just lists of items we can handle with loops. For example `(list "val1" "val2" "val3")`. And of course we can nest them as we wish. We'll define a new page, where we will list a bunch of items in an html list. Lets say we have a list of TODO items, here is how the template would look like, add this code to the main.tmpl file:
+The data we pass to the templates can be either plists like we already saw, or they can be just lists of items we can handle with loops. For example `(list "val1" "val2" "val3")`. And of course we can nest them as we wish. We'll define a new page, where we will list a bunch of items in an html list. Let's say we have a list of TODO items, here is what the template would look like, add this code to the main.tmpl file:
 
 {:lang="html"}
 ~~~~~~~~
@@ -214,7 +214,7 @@ The data we pass to the templates can be either plists like we already saw, or t
 
 `$todos` is the variable we pass directly to the template, foreach will loop through the contents, and put each item in the variable `$task`, which we can use in the body. The body outputs each list item.
 
-Now lets add the handler in `closure-hello.lisp`, first we define a variable named *todos*, and then we define a restas route to handle requests to todos/, here is how the whole file should look like:
+Now let's add the handler in `closure-hello.lisp`, first we define a variable named *todos*, and then we define a restas route to handle requests to todos/, here is what the whole file should look like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -237,7 +237,7 @@ Now lets add the handler in `closure-hello.lisp`, first we define a variable nam
          :body (closure-hello.view:todos (list :todos *todos*)))))
 ~~~~~~~~
 
-Notice that the code for the `todos` route is pretty much the same as for `main`, but we pass the output of the `todos` template to the body parameter of the `main` template, here is how it should look like in the browser when you navigate to the [http://localhost:8080/todos] url:
+Notice that the code for the `todos` route is pretty much the same as for `main`, but we pass the output of the `todos` template to the body parameter of the `main` template, here is what it should look like in the browser when you navigate to the [http://localhost:8080/todos] url:
 
 ![](images/c3i2.png)
 
@@ -255,7 +255,7 @@ Closure has support for conditionals, we'll only take a look at a simple example
 {/if}
 ~~~~~~~~
 
-We want to add a link at the top of our main page to our todos page, but we also want to add a link to the main page, on our todos page. We'll add a conditional in our `main` template to check on which page we are, and put the appropriate link there. Here is how our template should look like:
+We want to add a link at the top of our main page to our todos page, but we also want to add a link to the main page, on our todos page. We'll add a conditional in our `main` template to check on which page we are, and put the appropriate link there. Here is what our template should look like:
 
 {:lang="html"}
 ~~~~~~~~
@@ -317,7 +317,7 @@ And here are the screenshots:
 
 ### About routes and templates.
 
-A common pattern we see is that all of the routes is that they all call the same template, `closure-hello.view:main` to render their content. It would be nice to tell Restas to use the same template on all of the routes. I haven't talked in depth about how routes work, but in general, a route can return several types of values, if it returns an integer, say `404`, that will be interpreted as an HTTP status code, and an appropriate page will be returned to the user. If it returns a string, that string will be the body of the response, the routes we've seen so far are this kind. A route can also return a common-lisp pathname object, in which case hunchentoot will serve that file to the user. We can have a route like this in order to serve a static css file:
+A common pattern we see is that all of the routes is that they all call the same template, `closure-hello.view:main` to render their content. It would be nice to tell Restas to use the same template on all of the routes. I haven't talked in depth about how routes work, but in general, a route can return several types of values, if it returns an integer, say `404`, that will be interpreted as an HTTP status code, and an appropriate page will be returned to the user. If it returns a string, that string will be the body of the response, the routes we've seen so far are of this kind. A route can also return a common-lisp pathname object, in which case hunchentoot will serve that file to the user. We can have a route like this in order to serve a static css file:
 
 {:lang="common-lisp"}
 ~~~~~~~~

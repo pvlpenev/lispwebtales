@@ -70,7 +70,7 @@ and finally we paste the `sexml` initialization code:
 
 ## Updating the templates
 
-First, Let's create a template.lisp file, like we specified in the `asd` file. We set it's package to be `blogdemo` and specify that sexml should augment it's output with a doctype:
+First, let's create a template.lisp file, like we specified in the `asd` file. We set its package to be `blogdemo` and specify that sexml should augment its output with a doctype:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -103,7 +103,7 @@ I've gone a bit crazy with redefining `html-frame`. When we start our app with `
     (getf context :body))))
 ~~~~~~~~
 
-Since We'll be using the hunchentoot session to store information about the logged in user, we check if the session value `:username` has a value. If it is nil, there is no logged in user, and we display a link to the `login` route we'll define later. If the value is non-nil though, the user can add a post and can also log out, so we display the appropriate links, and display the username of the logged in user.
+Since we'll be using the hunchentoot session to store information about the logged in user, we check if the session value `:username` has a value. If it is nil, there is no logged in user, and we display a link to the `login` route we'll define later. If the value is non-nil though, the user can add a post and can also log out, so we display the appropriate links, and display the username of the logged in user.
 
 The `render-post` function remains the same:
 
@@ -184,7 +184,7 @@ Updating it wouldn't be too difficult:
           :body (render-post post))))
 ~~~~~~~~
 
-But what if we call the URL `/post/blah`, that would break our program. We need to make sure that `id` is an integer, and signal a `404 not found` to the user otherwise. We already saw that we can add a declaration to a route to specify a render method, but we can also specify other things in declarations. One such thing is the `:sift-variables` declaration, which is used to validate and transform route variables. Lets use it here with `#'parse-integer`:
+But what if we call the URL `/post/blah`, that would break our program. We need to make sure that `id` is an integer, and signal a `404 not found` to the user otherwise. We already saw that we can add a declaration to a route to specify a render method, but we can also specify other things in declarations. One such thing is the `:sift-variables` declaration, which is used to validate and transform route variables. Let's use it here with `#'parse-integer`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -195,7 +195,7 @@ But what if we call the URL `/post/blah`, that would break our program. We need 
           :body (render-post post))))
 ~~~~~~~~
 
-This works, but we now have another problem to solve, what if the user enters a link to a post that doesn't exist yet, if we have only 3 posts, and the user enters `/post/33` the program will break again. Lets define a custom validation function to use with `:sift-variables`:
+This works, but we now have another problem to solve, what if the user enters a link to a post that doesn't exist yet, if we have only 3 posts, and the user enters `/post/33` the program will break again. Let's define a custom validation function to use with `:sift-variables`:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -226,7 +226,7 @@ For the `author` route we'll also want to add such validation. First we'll need 
        collect (getf post :author-id)))
 ~~~~~~~~
 
-Now the validation function its self:
+Now the validation function itself:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -280,7 +280,7 @@ Logging out is simply setting the session value to nil, and redirecting to the h
   (redirect 'home))
 ~~~~~~~~
 
-Now lets handle adding blog posts. Another declaration we can use in routes is `:requirements`. You supply it a predicate, and if it returns nil, restas returns a NOT FOUND page. We'll define such a predicate, since we only want our route to be accessible to logged in users:
+Now let's handle adding blog posts. Another declaration we can use in routes is `:requirements`. You supply it a predicate, and if it returns nil, restas returns a NOT FOUND page. We'll define such a predicate, since we only want our route to be accessible to logged in users:
 
 {:lang="common-lisp"}
 ~~~~~~~~

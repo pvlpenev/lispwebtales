@@ -6,7 +6,7 @@ In the last chapter we developed a simple database schema using PostgreSQL and w
 
 ## Set up
 
-Lets set up sexml, like we did in the previous project. In the `defmodule.lisp` file, add the sexml initialization code:
+Let's set up sexml, like we did in the previous project. In the `defmodule.lisp` file, add the sexml initialization code:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -136,7 +136,7 @@ I hope there isn't anything I need to explain here anymore.
 
 ## The routes
 
-Lets start with the home page:
+Let's start with the home page:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -166,7 +166,7 @@ The next five routes handle user registration, logging in, and logging out. Firs
         :body (login-form)))
 ~~~~~~~~
 
-Now, lets handle the login form:
+Now, let's handle the login form:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -178,7 +178,7 @@ Now, lets handle the login form:
         (redirect 'login))))
 ~~~~~~~~
 
-This route is fairly simple, we pass the post data to `auth-user`, which as we already said, will call the method `datastore-auth-user` and return a username if it is successful. We check if it is, and if so, we log the user in using the function `log-in`, otherwise we redirect the user to try again. Here is `log-in`s definition is util.lisp:
+This route is fairly simple, we pass the post data to `auth-user`, which as we already said, will call the method `datastore-auth-user` and return a username if it is successful. We check if it is, and if so, we log the user in using the function `log-in`, otherwise we redirect the user to try again. Here is `log-in`s definition in util.lisp:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -255,7 +255,7 @@ A bit more interesting is the `upvote-link` route:
 
 ## Getting it to run
 
-In `util.lisp`, lets define a `start-linkdemo` function that will set up our application:
+In `util.lisp`, let's define a `start-linkdemo` function that will set up our application:
 
 {:lang="common-lisp"}
 ~~~~~~~~

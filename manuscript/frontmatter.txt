@@ -14,7 +14,7 @@ Pavel Penev, March 2013
 
 ## Why Lisp
 
-Today we have more programming languages than we can count. Somehow, Lisp still manages to stand out, at least for me. I've been obsessed with the lisp family of languages for four years now, and I've been especially interested in Common Lisp, which I consider to be the best general purpose dialect. It is an easy language to pick up, and a difficult language to master. So far, every day spend learning lisp has been a huge plus for me, so all those difficulties have been worth it. Lisp is fun, challenging and rewarding of such efforts. No language I've picked up since or before has felt the same way, they were all either needlessly complex(most of the complexity in lisp is there for a reason), or too simplistic and lacking in sophistication when that is needed.
+Today we have more programming languages than we can count. Somehow, Lisp still manages to stand out, at least for me. I've been obsessed with the lisp family of languages for four years now, and I've been especially interested in Common Lisp, which I consider to be the best general purpose dialect. It is an easy language to pick up, and a difficult language to master. So far, every day spend learning lisp has been a huge plus for me, so all those difficulties have been worth it. Lisp is fun, challenging and rewarding of such efforts. No language I've picked up since or before has felt the same way, they were all either needlessly complex (most of the complexity in lisp is there for a reason), or too simplistic and lacking in sophistication when that is needed.
 
 As for how practical this language is for web development, It's as practical as you make it. Lisp is the perfect language for the gray areas where were we still haven't quite figured out how to do things. I believe the web is one such area, and experimentation and playful exploration of ideas is vital. This is what Lisp was designed for, not for the web specifically, but for what it is, a new playground where flexibility and creativity have room to grow.
 
@@ -28,7 +28,7 @@ The book is a set of tutorials and examples. It uses the Common Lisp language an
 * The Restas web framework
 * The SEXML library for outputting XML and HTML
 * Closure-template for HTML templating
-* Postmodern for PostgreSQL access, and cl-reddis as a simple datastore
+* Postmodern for PostgreSQL access, and cl-redis as a simple datastore
 * Various utilities
 
 ## Who is this for
@@ -37,7 +37,7 @@ This book is for anyone interested in Lisp and web apps. I assume you have some 
 
 ## What you need to get started
 
-A lisp implementation, preferably sbcl(recommended for Linux users) or ccl(recommended for Mac and Windows users), and Quicklisp, the Common Lisp package manager. I've written a quick "getting started" tutorial in Appendix A. And the links in Appendix B have additional information. 
+A lisp implementation, preferably sbcl (recommended for Linux users) or ccl (recommended for Mac and Windows users), and Quicklisp, the Common Lisp package manager. I've written a quick "getting started" tutorial in Appendix A. And the links in Appendix B have additional information. 
 
 You will also need a text editor which supports matching parenthesis, so no notepad. Appendix A has some recommendations, but the best way to use Lisp is with Emacs and the Slime environment. A similar environment is available for Vim users with the Slimv plugin. If you don't already know Emacs or Vim, you can leave learning it for later, and just use any old code editor and the command line. If you are serious about Lisp though, consider picking up Emacs eventually.
 

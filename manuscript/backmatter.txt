@@ -6,7 +6,7 @@
 
 ### Getting a Lisp implementation
 
-The two implementations I recommend for use in this book are SBCL and CCL, both are very good, open source and generate fast code. If you are on windows or OS X, I recommend CCL, SBCL on Linux. I've had at least two people report to me problems with sbcl on OS X and and my tutorials, which is probably because of improperly built binaries, rather than an actual problem, but if you don't feel like compiling your SBCL from source(which I recommend), stick with CCL on those platforms for now.
+The two implementations I recommend for use in this book are SBCL and CCL, both are very good, open source and generate fast code. If you are on windows or OS X, I recommend CCL, SBCL on Linux. I've had at least two people report to me problems with sbcl on OS X and and my tutorials, which is probably because of improperly built binaries, rather than an actual problem, but if you don't feel like compiling your SBCL from source (which I recommend), stick with CCL on those platforms for now.
 
 Most Linux distributions have both CCL and SBCL in their package repositories, for example on Debian derived systems such as Ubuntu you can install sbcl with apt-get:
 
@@ -51,7 +51,7 @@ After you download CCL, uncompressed the archive with the following command:
 $ tar -xzvf ccl-1.8-linuxx86.tar.gz
 ~~~~~~~~
 
-CCL is started by a shell script in the `ccl/scripts` directory, named `ccl` or `ccl64` for the 32 and 64 bit versions respectively. The way you install CCL is by copying one(or both) of these scripts to a directory on your path, and editing them to point to the CCL directory you just uncompressed. so for example if my `ccl` directory is in my home directory, named `/home/pav` on Linux:
+CCL is started by a shell script in the `ccl/scripts` directory, named `ccl` or `ccl64` for the 32 and 64 bit versions respectively. The way you install CCL is by copying one (or both) of these scripts to a directory on your path, and editing them to point to the CCL directory you just uncompressed. so for example if my `ccl` directory is in my home directory, named `/home/pav` on Linux:
 
 ~~~~~~~~
 $ sudo cp /home/pav/ccl/scripts/ccl64 /usr/local/bin
@@ -191,7 +191,7 @@ If it started downloading and installing Restas, you're done. You can now quickl
 * LispIDE: Barely qualifies as an IDE, but is an option you can look into.
 * Notepad++: Popular code editor for Windows. Minimally acceptable as a lisp editor.
 
-# Appendix B: Recomended reading
+# Appendix B: Recommended reading
 
 ## Online tutorials
 
@@ -210,10 +210,10 @@ Cliki pages of note:
 
 [Online tutorials](http://www.cliki.net/Online%20Tutorial)
 
-[Recomended libraries](http://www.cliki.net/Current%20recommended%20libraries)
+[Recommended libraries](http://www.cliki.net/Current%20recommended%20libraries)
 
 ## IRC
 
-I(and many lispers) hang out on irc on the [Freenode](http://freenode.net/) server. Channels I frequent include `#lispweb` and `#lisp`. You can also find help on `#clnoobs`.
+I (and many lispers) hang out on irc on the [Freenode](http://freenode.net/) server. Channels I frequent include `#lispweb` and `#lisp`. You can also find help on `#clnoobs`.
 
 Check out a bunch of other lisp-related channels on [cliki](http://www.cliki.net/IRC).

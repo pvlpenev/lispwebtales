@@ -8,7 +8,7 @@ Redis is a very simple key-value store, it has support for strings, sets, lists 
 
 I assume redis is installed and is running on the local machine. On debian-like systems, this is just an `apt-get install redis-server` away. You can see if redis is running by starting the console client `redis-cli` and typeing `ping` in the prompt, it should respond with "PONG".
 
-Next, let's add `cl-redis`, the lisp client library for redis to our list of dependencies in `linkdemo.asd`. Also, lets add a file named `redis-datastore.lisp` to the project.  This is how our system definition looks like:
+Next, let's add `cl-redis`, the lisp client library for redis to our list of dependencies in `linkdemo.asd`. Also, let's add a file named `redis-datastore.lisp` to the project.  This is what our system definition looks like:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -76,7 +76,7 @@ And the corresponding upvote:
 
 ## The implementation
 
-In `redis-datastore.lisp` first lets define our datastore access class. Redis connections take two arguments, a host and a port, by default they are the local host, and 6379, Here is the class:
+In `redis-datastore.lisp` first let's define our datastore access class. Redis connections take two arguments, a host and a port, by default they are the local host, and 6379, Here is the class:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -183,7 +183,7 @@ Registering the user on the other hand is a bit more involved. First we must cre
 
 ## Handling upvotes
 
-Checking if a user has upvoted a link is as easy as checking to see if that user is in the set of upvoters for that link. Sets in redis are accessed with the `red-sismember` command(which I assume stands for "set is member"). It simply takes a key and a value and checks to see if that value is in the set denoted by the key:
+Checking if a user has upvoted a link is as easy as checking to see if that user is in the set of upvoters for that link. Sets in redis are accessed with the `red-sismember` command (which I assume stands for "set is member"). It simply takes a key and a value and checks to see if that value is in the set denoted by the key:
 
 {:lang="common-lisp"}
 ~~~~~~~~
@@ -286,5 +286,5 @@ Further reading:
 
 * [Redis home page](http://www.redis.io/)
 * [List of Redis commands](http://www.redis.io/commands)
-* [The Beauty of Simplicity: Mastering Database Design Using Redis by Ryan Briones(video)](http://vimeo.com/26385026)
-* [The Beauty of Simplicity: Mastering Database Design Using Redis by Ryan Briones(slides)](http://www.slideshare.net/ryanbriones/the-beauty-of-simplicity-mastering-database-design-with-redis)
+* [The Beauty of Simplicity: Mastering Database Design Using Redis by Ryan Briones (video)](http://vimeo.com/26385026)
+* [The Beauty of Simplicity: Mastering Database Design Using Redis by Ryan Briones (slides)](http://www.slideshare.net/ryanbriones/the-beauty-of-simplicity-mastering-database-design-with-redis)
