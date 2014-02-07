@@ -191,7 +191,7 @@ If it started downloading and installing Restas, you're done. You can now quickl
 * LispIDE: Barely qualifies as an IDE, but is an option you can look into.
 * Notepad++: Popular code editor for Windows. Minimally acceptable as a lisp editor.
 
-# Appendix B: Recomended reading
+# Appendix B: Recommended reading
 
 ## Online tutorials
 
@@ -210,7 +210,7 @@ Cliki pages of note:
 
 [Online tutorials](http://www.cliki.net/Online%20Tutorial)
 
-[Recomended libraries](http://www.cliki.net/Current%20recommended%20libraries)
+[Recommended libraries](http://www.cliki.net/Current%20recommended%20libraries)
 
 ## IRC
 
